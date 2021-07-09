@@ -8,7 +8,8 @@ Created on Fri Jul  2 18:59:21 2021
 
 from scipy.io import loadmat
 import tifffile as tif, numpy as np, os, matplotlib.pyplot as plt, sys
-import shutil 
+import shutil, cv2 
+from skimage.morphology import ball
 
 def transformix_command_line_call(src, dst, transformfile):
     '''Wrapper Function to call transformix using the commandline, this can be time consuming
@@ -163,64 +164,48 @@ def unpack_pnts(points_file, dst):
 
 #%%
 
-#path to npy file
-mat = "/home/kepecs/Documents/AA6-AK1a_cells_640_raw_bk10_shp500.npy"
-pnts = np.load(mat)
-pnts = np.array([pnts[c] for c in 'zyx']).T
-#for resize dimensions
-downsized = "/home/kepecs/Documents/AA6-AK1a_647_resampled.tif"
-downsized = tif.imread(downsized) #sagittal
-zd,yd,xd = downsized.shape #sagittal
-#reorient pnts
-pnts_sag = np.array([[xx[2],xx[1],xx[0]] for xx in pnts])
-#get full size dims
-stitched = "/mnt/uncertainty/AA6-AK1a/AA6-AK1a_561/original"
-y,z = tif.imread(os.path.join(stitched, os.listdir(stitched)[0])).shape #sagittal
-x = len([xx for xx in os.listdir(stitched) if ".tif" in xx]) #sagittal
-f = ((zd/z),(yd/y),(xd/x))
-downsized_pnts_sag = np.array([[xx[0]*f[0],xx[1]*f[1],xx[2]*f[2]] for xx in pnts_sag]).astype(int)
-#flip z and y
-#map cells first
-cell=np.zeros((zd,yd,xd)) 
-for pnt in downsized_pnts_sag :
-    z,y,x=pnt
-    cell[z,y,x] = 1
-#flip x and y
-cell_oriented = np.flip(cell, (1,2))    
-#get coordinates again
-downsized_pnts_sag_oriented = np.nonzero(cell_oriented)
-downsized_pnts_sag_oriented = np.array([downsized_pnts_sag_oriented[0],downsized_pnts_sag_oriented[1],downsized_pnts_sag_oriented[2]]).T
-#transform
-#make into transformix-friendly text file
-transformed_dst = "/home/kepecs/Documents/AA6-AK1a_points"
-if not os.path.exists(transformed_dst): os.mkdir(transformed_dst)
-pretransform_text_file = create_text_file_for_elastix(downsized_pnts_sag_oriented, transformed_dst)
-transformfiles = ["/home/kepecs/Documents/AA6-AK1a_elastix_resampled_to_auto/TransformParameters.0.txt",
-                  "/home/kepecs/Documents/AA6-AK1a_elastix_auto_to_reference/TransformParameters.0.txt",
-                  "/home/kepecs/Documents/AA6-AK1a_elastix_auto_to_reference/TransformParameters.1.txt"]
-#copy over elastix files
-transformfiles = modify_transform_files(transformfiles, transformed_dst) 
-change_transform_parameter_initial_transform(transformfiles[0], 'NoInitialTransform')
-#run transformix on points
-points_file = point_transformix(pretransform_text_file, transformfiles[-1], transformed_dst)
-#convert registered points into structure counts
-converted_points = unpack_pnts(points_file, transformed_dst)
-#%%
-atl_pth = "/home/kepecs/python/ClearMap2/ClearMap/Resources/Atlas/ABA_25um_reference.tif"
-atl = tif.imread(atl_pth)
-z,y,x = atl.shape
-#check
-if isinstance(converted_points, str):
-    converted_points = np.load(converted_points)
-arr=converted_points.astype(int)
-cell=np.zeros((z,y,x)) #init cellmap
-miss = 0
-for pnt in arr:
-    z,y,x=pnt
-    try:
+if __name__ == "__main__":
+    
+    #path to npy file
+    mat = "/home/kepecs/Documents/AA6-AK1a_cells_561_raw_bkNone_shp2600.npy"
+    pnts = np.load(mat)
+    pnts = np.array([pnts[c] for c in 'zyx']).T
+    #for resize dimensions
+    downsized = "/home/kepecs/Documents/AA6_AK1a/AA6-AK1a_647_resampled.tif"
+    downsized = tif.imread(downsized) #sagittal
+    zd,yd,xd = downsized.shape #sagittal
+    #reorient pnts
+    pnts_sag = np.array([[xx[2],xx[1],xx[0]] for xx in pnts])
+    #get full size dims
+    stitched = "/mnt/uncertainty/AA6-AK1a/AA6-AK1a_561/original"
+    y,z = tif.imread(os.path.join(stitched, os.listdir(stitched)[0])).shape #sagittal
+    x = len([xx for xx in os.listdir(stitched) if ".tif" in xx]) #sagittal
+    f = ((zd/z),(yd/y),(xd/x))
+    downsized_pnts_sag = np.array([[xx[0]*f[0],xx[1]*f[1],xx[2]*f[2]] for xx in pnts_sag]).astype(int)
+    #flip z and y
+    #map cells first
+    cell=np.zeros((zd,yd,xd)) 
+    for pnt in downsized_pnts_sag :
+        z,y,x=pnt
         cell[z,y,x] = 1
-    except:
-        miss+=1
+    #flip x and y
+    cell_oriented = np.flip(cell, (1,2))    
+    #get coordinates again
+    downsized_pnts_sag_oriented = np.nonzero(cell_oriented)
+    downsized_pnts_sag_oriented = np.array([downsized_pnts_sag_oriented[0],downsized_pnts_sag_oriented[1],downsized_pnts_sag_oriented[2]]).T
+    #transform
+    #make into transformix-friendly text file
+    transformed_dst = "/home/kepecs/Documents/AA6_AK1a/561_points"
+    if not os.path.exists(transformed_dst): os.mkdir(transformed_dst)
+    pretransform_text_file = create_text_file_for_elastix(downsized_pnts_sag_oriented, transformed_dst)
+    transformfiles = ["/home/kepecs/Documents/AA6_AK1a/AA6-AK1a_elastix_resampled_to_auto/TransformParameters.0.txt",
+                      "/home/kepecs/Documents/AA6_AK1a/AA6-AK1a_elastix_auto_to_reference/TransformParameters.0.txt",
+                      "/home/kepecs/Documents/AA6_AK1a/AA6-AK1a_elastix_auto_to_reference/TransformParameters.1.txt"]
+    #copy over elastix files
+    transformfiles = modify_transform_files(transformfiles, transformed_dst) 
+    change_transform_parameter_initial_transform(transformfiles[0], 'NoInitialTransform')
+    #run transformix on points
+    points_file = point_transformix(pretransform_text_file, transformfiles[-1], transformed_dst)
+    #convert registered points into structure counts
+    converted_points = unpack_pnts(points_file, transformed_dst)
 
-plt.imshow(cell[300])
-tif.imsave("/home/kepecs/Documents/test2.tif", cell.astype("uint8"))
