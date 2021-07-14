@@ -69,8 +69,7 @@ for k,v in ontology_dict.items():
     if k != "children": #ignore children ids, can get from json
         anndf[k] = list(findkeys(ontology_dict, k))
 #get total counts per region
-iids = np.unique(anndf.id)
-anndf["total_voxels"] = [ann[ann==iid].shape[0] for iid in iids]
+anndf["total_voxels"] = [ann[ann==iid].shape[0] for iid in anndf.id.values]
 df = anndf.copy()
 df["cell_count"] = np.zeros(len(anndf))
 animaldfs = []
@@ -140,22 +139,25 @@ analyse561["density"] = analyse561["cell_count"]/(analyse561["total_voxels"]*(sc
 for animal in animals:
     analyse561.loc[analyse561.animal == animal, "frac_of_cell_count"] = analyse561.loc[analyse561.animal == animal, 
                                 "cell_count"]/analyse561.loc[analyse561.animal == animal, "cell_count"].sum()
+#%cells/mm3
+analyse561["frac_of_density"] = analyse561["frac_of_cell_count"]/(analyse561["total_voxels"]*(scale**3))
+
 iid_pval = {}
 #density p-values
 for iid in np.unique(animaldfmaster561.id):
     tstat,pval = ttest_ind(analyse561.loc[(analyse561.id == iid) & 
-                           (analyse561.group == "punished"), "density"].values,
+                           (analyse561.group == "punished"), "frac_of_density"].values,
                              analyse561.loc[(analyse561.id == iid) & 
-                           (analyse561.group == "control"), "density"].values, equal_var = False)
+                           (analyse561.group == "control"), "frac_of_density"].values, equal_var = False)
     #assign
-    analyse561.loc[(analyse561.id == iid) , "uncorrected p-value (density)"] = pval
+    analyse561.loc[(analyse561.id == iid) , "uncorrected p-value (frac_of_density)"] = pval
     if str(pval) != "nan": iid_pval[iid] = pval
 #correct...
 from statsmodels.stats.multitest import multipletests
 pvals = np.array(list(iid_pval.values()))
 r,pvals_corr,alphas,alphab = multipletests(pvals, method = "fdr_bh", alpha = 0.1)
 for i,iid in enumerate(iid_pval.keys()):
-    analyse561.loc[(analyse561.id == iid) , "fdr bh corrected p-value (density)"] = pvals_corr[i]
+    analyse561.loc[(analyse561.id == iid) , "fdr bh corrected p-value (frac_of_density)"] = pvals_corr[i]
 #frac p-values
 iid_pval = {}
 for iid in np.unique(animaldfmaster561.id):
@@ -190,23 +192,9 @@ analyse640["density"] = analyse640["cell_count"]/(analyse640["total_voxels"]*(sc
 for animal in animals:
     analyse640.loc[analyse640.animal == animal, "frac_of_cell_count"] = analyse640.loc[analyse640.animal == animal, 
                                 "cell_count"]/analyse640.loc[analyse640.animal == animal, "cell_count"].sum()
-
-iid_pval = {}
-for iid in np.unique(animaldfmaster561.id):
-    tstat,pval = ttest_ind(analyse640.loc[(analyse640.id == iid) & 
-                           (analyse640.group == "punished"), "density"].values,
-                             analyse640.loc[(analyse640.id == iid) & 
-                           (analyse640.group == "control"), "density"].values, equal_var = False)
-    #assign
-    analyse640.loc[(analyse640.id == iid) , "uncorrected p-value (density)"] = pval
-    if str(pval) != "nan": iid_pval[iid] = pval
-#correct...
-from statsmodels.stats.multitest import multipletests
-pvals = np.array(list(iid_pval.values()))
-r,pvals_corr,alphas,alphab = multipletests(pvals, method = "fdr_bh", alpha = 0.1)
-for i,iid in enumerate(iid_pval.keys()):
-    analyse640.loc[(analyse640.id == iid) , "fdr bh corrected p-value (density)"] = pvals_corr[i]
-    
+#%cells/mm3
+analyse640["frac_of_density"] = analyse640["frac_of_cell_count"]/(analyse640["total_voxels"]*(scale**3))
+   
 #frac p-values
 iid_pval = {}
 for iid in np.unique(animaldfmaster561.id):
@@ -223,18 +211,36 @@ pvals = np.array(list(iid_pval.values()))
 r,pvals_corr,alphas,alphab = multipletests(pvals, method = "fdr_bh", alpha = 0.1)
 for i,iid in enumerate(iid_pval.keys()):
     analyse640.loc[(analyse640.id == iid) , "fdr bh corrected p-value (frac_of_cell_count)"] = pvals_corr[i]
+    
+#density frac p-values
+iid_pval = {}
+for iid in np.unique(animaldfmaster561.id):
+    tstat,pval = ttest_ind(analyse640.loc[(analyse640.id == iid) & 
+                           (analyse640.group == "punished"), "frac_of_density"].values,
+                             analyse640.loc[(analyse640.id == iid) & 
+                           (analyse640.group == "control"), "frac_of_density"].values, equal_var = False)
+    #assign
+    analyse640.loc[(analyse640.id == iid) , "uncorrected p-value (frac_of_density)"] = pval
+    if str(pval) != "nan": iid_pval[iid] = pval
+#correct...
+from statsmodels.stats.multitest import multipletests
+pvals = np.array(list(iid_pval.values()))
+r,pvals_corr,alphas,alphab = multipletests(pvals, method = "fdr_bh", alpha = 0.1)
+for i,iid in enumerate(iid_pval.keys()):
+    analyse640.loc[(analyse640.id == iid) , "fdr bh corrected p-value (frac_of_density)"] = pvals_corr[i]
+    
 analyse640.to_csv("/home/kepecs/Documents/640_cell_counts_all_animals_w_pvals.csv", index = False)   
 
 #%%
 pval561 = analyse561[analyse561["uncorrected p-value (frac_of_cell_count)"]<0.05]
-f, ax = plt.subplots(figsize=(7,8))
+f, ax = plt.subplots(figsize=(7,14))
 # g = sns.boxplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval561, orient = "h", showfliers = False, showcaps=False)
 g = sns.stripplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval561, orient = "h", size = 4)
 #hide the right and top spines
 sns.despine(top=True, right=True, left=False, bottom=False)
 g.set_xscale("symlog")
-g.set_xlim([-0.001, 0.04])
-ticks = np.arange(0,0.06,0.02)
+# g.set_xlim([-0.001, 0.02])
+# ticks = np.arange(0,0.04,0.02)
 # g.set_xticks(ticks); g.set_xticklabels(ticks)
 ax.set_xlabel("cell count/total cells in brain (log)")
 ax.set_ylabel("brain region")
@@ -242,17 +248,49 @@ ax.set_title("channel 561 nm, p < 0.05 (uncorrected)")
 plt.savefig("/home/kepecs/Documents/561_boxplot_pval.svg", dpi = 300, bbox_inches="tight")
 
 pval640 = analyse640[analyse640["uncorrected p-value (frac_of_cell_count)"]<0.05]
-f, ax = plt.subplots(figsize=(7,15))
+f, ax = plt.subplots(figsize=(7,17))
 # g = sns.boxplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval640, orient = "h", showfliers = False, showcaps=False)
 g = sns.stripplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval640, orient = "h", size = 4)
 #hide the right and top spines
 sns.despine(top=True, right=True, left=False, bottom=False)
 g.set_xscale("symlog")
-g.set_xlim([-0.001, 0.02])
-ticks = np.arange(0,0.025,0.005)
-g.set_xticks(ticks); g.set_xticklabels(ticks)
+# g.set_xlim([-0.001, 0.04])
+# ticks = np.arange(0,0.05,0.01)
+# g.set_xticks(ticks); g.set_xticklabels(ticks)
+g.set_yticklabels(g.get_yticklabels(), fontsize = 7)
 ax.set_xlabel("cell count/total cells in brain (log)")
 ax.set_ylabel("brain region")
 ax.set_title("channel 640 nm, p < 0.05 (uncorrected)")
 
-plt.savefig("/home/kepecs/Documents/640_boxplot_pval_zoom.svg", dpi = 300, bbox_inches="tight")
+plt.savefig("/home/kepecs/Documents/640_boxplot_pval.svg", dpi = 300, bbox_inches="tight")
+
+#%%
+#get stripplot of all regions
+sois = ["Isocortex", "Thalamus", "Hypothalamus", "Midbrain", "Hindbrain"]
+ordered_sois = []
+for soi in sois:
+    get_progeny(ontology_dict, soi, ordered_sois)
+#561    
+#sort by nonzero sois
+ordered_sois = [xx for xx in ordered_sois if any(analyse561.loc[analyse561.name == xx, "cell_count"] > 0)]
+ordered_acronym = [analyse561.loc[analyse561.name == soi, "acronym"].values[0] for soi in ordered_sois]
+    
+f, ax = plt.subplots(figsize=(25,7))
+g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
+                  data = analyse561, orient = "v", size = 4)
+#shutoff ticks
+g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=4)# g.set_ytickslabels()
+# g.set_ylim([-1,5])
+plt.savefig("/home/kepecs/Documents/561_manhattan_plot_frac_of_density.svg", dpi = 300, bbox_inches="tight")
+#640
+#sort by nonzero sois
+ordered_sois = [xx for xx in ordered_sois if any(analyse640.loc[analyse561.name == xx, "cell_count"] > 0)]
+ordered_acronym = [analyse640.loc[analyse640.name == soi, "acronym"].values[0] for soi in ordered_sois]
+    
+f, ax = plt.subplots(figsize=(25,7))
+g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
+                  data = analyse640, orient = "v", size = 4)
+#shutoff ticks
+g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=4)# g.set_ytickslabels()
+plt.savefig("/home/kepecs/Documents/640_manhattan_plot_frac_of_density.svg", dpi = 300, bbox_inches="tight")
+
