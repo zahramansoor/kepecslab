@@ -53,6 +53,7 @@ def get_progeny(dic,parent_structure,progeny_list):
         get_progeny(child,parent_structure=parent_structure,progeny_list=progeny_list)
     return 
 
+#%%
 src = "/home/kepecs/Documents/"
 annpth = "/home/kepecs/python/ClearMap2/ClearMap/Resources/Atlas/ABA_25um_annotation.tif"
 ontology_file = "/home/kepecs/python/ClearMap2/ClearMap/Resources/Atlas/ABA_annotation.json"
@@ -266,7 +267,7 @@ plt.savefig("/home/kepecs/Documents/640_boxplot_pval.svg", dpi = 300, bbox_inche
 
 #%%
 #get stripplot of all regions
-sois = ["Isocortex", "Thalamus", "Hypothalamus", "Midbrain", "Hindbrain"]
+sois = ["Isocortex", "Midbrain"] #"Thalamus", "Hypothalamus", "Hindbrain"]
 ordered_sois = []
 for soi in sois:
     get_progeny(ontology_dict, soi, ordered_sois)
@@ -275,22 +276,26 @@ for soi in sois:
 ordered_sois = [xx for xx in ordered_sois if any(analyse561.loc[analyse561.name == xx, "cell_count"] > 0)]
 ordered_acronym = [analyse561.loc[analyse561.name == soi, "acronym"].values[0] for soi in ordered_sois]
     
-f, ax = plt.subplots(figsize=(25,7))
-g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
-                  data = analyse561, orient = "v", size = 4)
+f, ax = plt.subplots(figsize=(30,7))
+g = sns.stripplot(x = "acronym", y = "frac_of_cell_count", hue = "group", order = ordered_acronym,
+                  data = analyse561, orient = "v", size = 4, marker="D", alpha = 0.5)
+
+sns.stripplot(x = "acronym", y = "frac_of_cell_count", hue = "group", order = ordered_acronym,
+                  data = analyse640, orient = "v", size = 4, alpha = 0.5)
 #shutoff ticks
-g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=4)# g.set_ytickslabels()
-# g.set_ylim([-1,5])
-plt.savefig("/home/kepecs/Documents/561_manhattan_plot_frac_of_density.svg", dpi = 300, bbox_inches="tight")
-#640
-#sort by nonzero sois
-ordered_sois = [xx for xx in ordered_sois if any(analyse640.loc[analyse561.name == xx, "cell_count"] > 0)]
-ordered_acronym = [analyse640.loc[analyse640.name == soi, "acronym"].values[0] for soi in ordered_sois]
+g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=5)# g.set_ytickslabels()
+# g.set_ylim([-0.001,0.02])
+plt.savefig("/home/kepecs/Documents/2channels_manhattan_plot_frac_of_cell_count.svg", 
+            dpi = 300, bbox_inches="tight")
+# #640
+# #sort by nonzero sois
+# ordered_sois = [xx for xx in ordered_sois if any(analyse640.loc[analyse640.name == xx, "cell_count"] > 0)]
+# ordered_acronym = [analyse640.loc[analyse640.name == soi, "acronym"].values[0] for soi in ordered_sois]
     
-f, ax = plt.subplots(figsize=(25,7))
-g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
-                  data = analyse640, orient = "v", size = 4)
-#shutoff ticks
-g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=4)# g.set_ytickslabels()
-plt.savefig("/home/kepecs/Documents/640_manhattan_plot_frac_of_density.svg", dpi = 300, bbox_inches="tight")
+# f, ax = plt.subplots(figsize=(25,7))
+# g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
+#                   data = analyse640, orient = "v", size = 4)
+# #shutoff ticks
+# g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=4)# g.set_ytickslabels()
+# plt.savefig("/home/kepecs/Documents/640_manhattan_plot_frac_of_density.svg", dpi = 300, bbox_inches="tight")
 

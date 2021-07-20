@@ -45,13 +45,19 @@ for animal in animals:
         tif.imsave(os.path.join(dst, "{0}_{1}_overlay.tif".format(animal, ch)), merged.astype("uint16"))
 
 #%%
+#animal name 
+animal = "AA6-AK1d"
+channel = 640
 #raw point overlay
-raw = "/home/kepecs/Documents/AA6-AK1a/AA6-AK1a_cells_640_filtered20.npy"
-src = "/mnt/uncertainty/AA6-AK1a/AA6-AK1a_640"
-zrng = [600,630]
+raw = "/home/kepecs/Documents/{0}/{0}_cells_{1}_filtered20.npy".format(animal, channel)
+src = "/mnt/uncertainty/{0}/{0}_{1}".format(animal, channel)
+zrng = [550,570]
 pnts = np.load(raw)
 pnts = pnts[(pnts["z"]>=zrng[0]) & (pnts["z"]<zrng[1])]
-imgs = [os.path.join(src,xx) for xx in os.listdir(src) if int(xx[28:31])>=zrng[0] and int(xx[28:31])<zrng[1]]; imgs.sort()
+try:
+    imgs = [os.path.join(src,xx) for xx in os.listdir(src) if "tif" in xx and int(xx[28:31])>=zrng[0] and int(xx[28:31])<zrng[1]]; imgs.sort()
+except:
+    imgs = [os.path.join(src,xx) for xx in os.listdir(src) if "tif" in xx and int(xx[27:30])>=zrng[0] and int(xx[27:30])<zrng[1]]; imgs.sort()
 imgs = np.array([tif.imread(xx) for xx in imgs])
 z,y,x = imgs.shape
 cell=np.zeros((zrng[1]-zrng[0],y,x)) #init cellmap
@@ -65,7 +71,8 @@ cell_map = cell.astype("uint8")
 cell_map = np.asarray([cv2.dilate(cell_map[i], selem, iterations = 1) for i in range(cell_map.shape[0])])
 #overlay of cell map
 merged = np.stack([np.max(imgs,axis=0), np.max(cell_map,axis=0), np.zeros((y,x))], -1)
-tif.imsave("/home/kepecs/Documents/raw_640_z{0}-{1}.tif".format(zrng[0],zrng[1]), merged.astype("uint16"))
+tif.imsave("/home/kepecs/Documents/{0}_raw_{1}_z{2}-{3}.tif".format(animal, 
+                channel, zrng[0],zrng[1]), merged.astype("uint16"))
 
 #%%
 import pandas as pd
