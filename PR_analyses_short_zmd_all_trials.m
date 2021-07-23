@@ -35,9 +35,7 @@ for ani=1:5
     for f =1:length(flist)     
         disp(f);
         load(fullfile(animals{ani}, flist(f).name)) %load session file      
-        trials = {1:50, length(SessionData.RawEvents.Trial)-50+1:length(SessionData.RawEvents.Trial)}; %trail types; %only look at first 50 trials!!!!!!!!!!!
-        %trials = length(SessionData.RawEvents.Trial)-30+1:length(SessionData.RawEvents.Trial);
-        %length(SessionData.RawEvents.Trial) ==> for all trails
+        trials = {1:length(SessionData.RawEvents.Trial)}; 
         bp=[];
         rew=[];
         for t=1:length(trials)
@@ -113,56 +111,44 @@ for ani=1:5
     fig = figure();
     subplot(221);
     plot(mbp(1,:), 'k', 'LineWidth',2), hold on
-    plot(mbp(2,:), 'm', 'LineWidth',2), hold on
     xticks(1:length(mbp))
     xticklabels(dates)
     xline(day,'--r',{'C26','injection'});
     ylabel('mean breaking point')
     xlabel('training sessions')
-    legend('first 50 trials','last 50 trials')
     hold off
     subplot(222)
     plot(reshape(rel(1, ani,:), 1, []), 'k', 'LineWidth',2), hold on
-    plot(reshape(rel(2, ani,:), 1, []), 'm', 'LineWidth',2), hold on
     xline(day,'--r',{'C26','injection'});
     ylabel('relation high/low')
     xlabel('training sessions')
     xticks(1:length(mbp))
     xticklabels(dates)
-    legend('first 50 trials','last 50 trials')
     hold off
     subplot(223)
     plot(reshape(rewa(1, ani,:), 1, []), 'k', 'LineWidth',2), hold on
-    plot(reshape(rewa(2, ani,:), 1, []), 'm', 'LineWidth',2), hold on
     xline(day,'--r',{'C26','injection'});
     ylabel('water intake')
     xlabel('training sessions')
     xticks(1:length(mbp))
     xticklabels(dates)
-    legend('first 50 trials','last 50 trials')
     hold off
     subplot(224)
     plot(reshape(poke(1, ani,:), 1, []), 'k', 'LineWidth',2), hold on
-    plot(reshape(poke(2, ani,:), 1, []), 'm', 'LineWidth',2), hold on
     xline(day,'--r',{'C26','injection'});
     ylabel('pokes')
     xlabel('training sessions')
     xticks(1:length(mbp))
     xticklabels(dates)
-    legend('first 50 trials','last 50 trials')
     sgtitle(sprintf('summary for %s', annames(ani)))
     currfile = strcat(dst, '\', annames(ani), ...
         sprintf('_training_summary_sessions1-%d_firstlast30trails.jpeg', length(flist)));
     saveas(fig, currfile)
     %save to larger array for plots across animals?
-    pokeall(1, ani,:) = reshape(poke(1, ani,:), 1, []); %first 50 trials
-    pokeall(2, ani,:) = reshape(poke(2, ani,:), 1, []); %last 50 trials
+    pokeall(1, ani,:) = reshape(poke(1, ani,:), 1, []);
     rewaall(1, ani,:) = reshape(rewa(1, ani,:), 1, []);
-    rewaall(2, ani,:) = reshape(rewa(2, ani,:), 1, []);
     relaall(1, ani, :) = reshape(rel(1, ani,:), 1, []);
-    relaall(2, ani, :) = reshape(rel(2, ani,:), 1, []);
     mbpall(1, ani, 1:length(mbp(1, :))) = mbp(1, :);
-    mbpall(2, ani, 1:length(mbp(1, :))) = mbp(2, :);
 end
 
 %%
@@ -179,62 +165,50 @@ end
     
 fig = figure();
 subplot(221);
-plot(reshape(nanmean(mbpall(1, 1:3, :)), 1, []), 'k', 'LineWidth',2), hold on
-plot(reshape(nanmean(mbpall(2, 1:3, :)), 1, []), 'm', 'LineWidth',2), hold on
-plot(reshape(nanmean(mbpall(1, 3:5, :)), 1, []), ':b', 'LineWidth',2), hold on
-plot(reshape(nanmean(mbpall(2, 3:5, :)), 1, []), ':g', 'LineWidth',2), hold on
-xticks(1:length(reshape(nanmean(mbpall(2, 3:5, :)), 1, [])))
+plot(reshape(nanmean(mbpall(1, 1:3, :)), 1, []), 'g', 'LineWidth',2), hold on
+plot(reshape(nanmean(mbpall(1, 3:5, :)), 1, []), ':k', 'LineWidth',2), hold on
+xticks(1:length(reshape(nanmean(mbpall(1, 3:5, :)), 1, [])))
 xticklabels(dates)
 xline(day,'--r',{'C26','injection'});
 ylabel('mean breaking point')
 xlabel('training sessions')
 title('mean breaking point')
-legend('tumor first 50 trials','tumor last 50 trials', 'control first 50 trials', ...
-    'control last 50 trials', 'Location','northwest','NumColumns',2)
+legend('tumor', 'control', 'Location','northwest','NumColumns',2)
 hold off
    
 subplot(222)
-plot(reshape(nanmean(relaall(1, 1:3, :)), 1, []), 'k', 'LineWidth',2), hold on
-plot(reshape(nanmean(relaall(2, 1:3, :)), 1, []), 'm', 'LineWidth',2), hold on
-plot(reshape(nanmean(relaall(1, 3:5, :)), 1, []), ':b', 'LineWidth',2), hold on
-plot(reshape(nanmean(relaall(2, 3:5, :)), 1, []), ':g', 'LineWidth',2), hold on
-xticks(1:length(reshape(nanmean(relaall(2, 3:5, :)), 1, [])))
+plot(reshape(nanmean(relaall(1, 1:3, :)), 1, []), 'g', 'LineWidth',2), hold on
+plot(reshape(nanmean(relaall(1, 3:5, :)), 1, []), ':k', 'LineWidth',2), hold on
+xticks(1:length(reshape(nanmean(relaall(1, 3:5, :)), 1, [])))
 xticklabels(dates)
 xline(day,'--r',{'C26','injection'});
 ylabel('relation high/low')
 title('relation high/low rewards')
 xlabel('training sessions')
-legend('tumor first 50 trials','tumor last 50 trials', 'control first 50 trials', ...
-    'control last 50 trials', 'Location','northwest','NumColumns',2)
+legend('tumor', 'control', 'Location','northwest','NumColumns',2)
 hold off
 
 subplot(223)
-plot(reshape(nanmean(rewaall(1, 1:3, :)), 1, []), 'k', 'LineWidth',2), hold on
-plot(reshape(nanmean(rewaall(2, 1:3, :)), 1, []), 'm', 'LineWidth',2), hold on
-plot(reshape(nanmean(rewaall(1, 3:5, :)), 1, []), ':b', 'LineWidth',2), hold on
-plot(reshape(nanmean(rewaall(2, 3:5, :)), 1, []), ':g', 'LineWidth',2), hold on
-xticks(1:length(reshape(nanmean(rewaall(2, 3:5, :)), 1, [])))
+plot(reshape(nanmean(rewaall(1, 1:3, :)), 1, []), 'g', 'LineWidth',2), hold on
+plot(reshape(nanmean(rewaall(1, 3:5, :)), 1, []), ':k', 'LineWidth',2), hold on
+xticks(1:length(reshape(nanmean(rewaall(1, 3:5, :)), 1, [])))
 xticklabels(dates)
 xline(day,'--r',{'C26','injection'});
 ylabel('water intake')
 title('water intake')
 xlabel('training sessions')
-legend('tumor first 50 trials','tumor last 50 trials', 'control first 50 trials', ...
-    'control last 50 trials', 'Location','northwest','NumColumns',2)
+legend('tumor', 'control', 'Location','northwest','NumColumns',2)
 hold off
 
 subplot(224)
-plot(reshape(nanmean(pokeall(1, 1:3, :)), 1, []), 'k', 'LineWidth',2), hold on
-plot(reshape(nanmean(pokeall(2, 1:3, :)), 1, []), 'm', 'LineWidth',2), hold on
-plot(reshape(nanmean(pokeall(1, 3:5, :)), 1, []), ':b', 'LineWidth',2), hold on
-plot(reshape(nanmean(pokeall(2, 3:5, :)), 1, []), ':g', 'LineWidth',2), hold on
-xticks(1:length(reshape(nanmean(pokeall(2, 3:5, :)), 1, [])))
+plot(reshape(nanmean(pokeall(1, 1:3, :)), 1, []), 'g', 'LineWidth',2), hold on
+plot(reshape(nanmean(pokeall(1, 3:5, :)), 1, []), ':k', 'LineWidth',2), hold on
+xticks(1:length(reshape(nanmean(pokeall(1, 3:5, :)), 1, [])))
 xticklabels(dates)
 xline(day,'--r',{'C26','injection'});
 ylabel('pokes')
 title('pokes')
-legend('tumor first 50 trials','tumor last 50 trials', 'control first 50 trials', ...
-    'control last 50 trials', 'Location','northwest','NumColumns',2)
+legend('tumor', 'control', 'Location','northwest','NumColumns',2)
 hold off
 
 for i=1:4
