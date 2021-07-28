@@ -165,7 +165,7 @@ def unpack_pnts(points_file, dst):
 #%%
 
 if __name__ == "__main__":
-    animals = ["AA6-AK1d", "AA6-AK3b", "AA6-AK3c"]
+    animals = ["AA6-AK3b", "AA6-AK3c"]#, "AA6-AK3b", "AA6-AK3c"]
     chs = [561, 640]
 
     for animal in animals:

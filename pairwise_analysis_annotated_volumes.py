@@ -26,7 +26,7 @@ if __name__ == "__main__":
     
     for cutoff in cutoffs:
         for br, brain in enumerate(brains):
-            fls = [os.path.join(brain, xx) for xx in os.listdir(brain)]; fls.sort()
+            fls = [os.path.join(brain, xx) for xx in os.listdir(brain) if "filtered" in xx]; fls.sort()
             #init dataframe
             print("brain: %s\ncutoff: %s \n\n" % (os.path.basename(brain), cutoff))
             df = pd.DataFrame()
@@ -70,3 +70,28 @@ if __name__ == "__main__":
         
             #export csv per brain/volume                
             df.to_csv(os.path.join(dst, "{0}_{1}.csv".format(os.path.basename(brain), cutoff)))
+            
+#%%
+#get parameters based on highest f1-score
+#idea = get the top 5 parameters with the highest f1-score, pick one with the lowest fp of the top 5
+src = "/home/kepecs/Documents/cfos_annotations/results"
+brains = [xx[:-4] for xx in os.listdir(src)]; brains.sort()
+param = pd.DataFrame()
+param["brain"] = brains
+for br in brains:
+    df = pd.read_csv(os.path.join(src, br+".csv"), index_col = None)
+    df = df.sort_values("f1", ascending = False)[:3]
+    df = df.sort_values("fp")
+    param.loc[param.brain == br, "parameter"] = df["parameters"].values[0]
+    param.loc[param.brain == br, "f1"] = df["f1"].values[0]
+    param.loc[param.brain == br, "tp"] = df["tp"].values[0]
+    param.loc[param.brain == br, "fp"] = df["fp"].values[0]
+    param.loc[param.brain == br, "fn"] = df["fn"].values[0]
+    print(br)
+    print("\n")
+    print(df["fp"].values)
+    print(df["fn"].values)
+    print(df["f1"].values)
+    print(df["parameters"].values)
+    print("\n********************************************")
+param.to_csv("/home/kepecs/Documents/cfos_annotations/params_per_brainv2.csv", index = None)

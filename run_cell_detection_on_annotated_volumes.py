@@ -24,7 +24,7 @@ for vol in vols:
     ch561 = [True if "561" in volnm else False][0]
     #parameter sweep
     bkshp = [None, (3,3), (5,5), (7,7), (10,10),
-                   (13,13)]
+                   (13,13), (15,15)]
     if ch561:
         shpthres = [1900,2100,2300,2600,3000] #diff params for 561 based on first param sweep
     else: shpthres = [100, 300, 500, 700, 900]
@@ -63,3 +63,12 @@ for vol in vols:
         cells.detect_cells(vol, dstch,
                              cell_detection_parameter=cell_detection_parameter, 
                              processing_parameter=processing_parameter)
+        #FILTER
+        thresholds = {
+        "source" : None,
+        "size"   : (20,None)
+         } 
+        #channel 1 
+        cells.filter_cells(source = dstch, 
+                   sink = os.path.join(dst, "cells_bkshp{0}_shpthres{1}_maxshp{2}_filtered20.npy".format(bkshp_, shpthres_, maximashp_)), 
+                   thresholds=thresholds);

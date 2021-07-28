@@ -233,25 +233,25 @@ for i,iid in enumerate(iid_pval.keys()):
 analyse640.to_csv("/home/kepecs/Documents/640_cell_counts_all_animals_w_pvals.csv", index = False)   
 
 #%%
-pval561 = analyse561[analyse561["uncorrected p-value (frac_of_cell_count)"]<0.05]
+pval561 = analyse561[analyse561["uncorrected p-value (frac_of_density)"]<0.05]
 f, ax = plt.subplots(figsize=(7,14))
 # g = sns.boxplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval561, orient = "h", showfliers = False, showcaps=False)
-g = sns.stripplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval561, orient = "h", size = 4)
+g = sns.stripplot(x = "frac_of_density", y = "name", hue = "group", data = pval561, orient = "h", size = 4)
 #hide the right and top spines
 sns.despine(top=True, right=True, left=False, bottom=False)
 g.set_xscale("symlog")
 # g.set_xlim([-0.001, 0.02])
 # ticks = np.arange(0,0.04,0.02)
 # g.set_xticks(ticks); g.set_xticklabels(ticks)
-ax.set_xlabel("cell count/total cells in brain (log)")
+ax.set_xlabel("% cells/$mm^3$ (log)")
 ax.set_ylabel("brain region")
 ax.set_title("channel 561 nm, p < 0.05 (uncorrected)")
-plt.savefig("/home/kepecs/Documents/561_boxplot_pval.svg", dpi = 300, bbox_inches="tight")
+plt.savefig("/home/kepecs/Documents/561_boxplot_pval_frac_of_density.svg", dpi = 300, bbox_inches="tight")
 
 pval640 = analyse640[analyse640["uncorrected p-value (frac_of_cell_count)"]<0.05]
 f, ax = plt.subplots(figsize=(7,17))
 # g = sns.boxplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval640, orient = "h", showfliers = False, showcaps=False)
-g = sns.stripplot(x = "frac_of_cell_count", y = "name", hue = "group", data = pval640, orient = "h", size = 4)
+g = sns.stripplot(x = "frac_of_density", y = "name", hue = "group", data = pval640, orient = "h", size = 4)
 #hide the right and top spines
 sns.despine(top=True, right=True, left=False, bottom=False)
 g.set_xscale("symlog")
@@ -259,15 +259,15 @@ g.set_xscale("symlog")
 # ticks = np.arange(0,0.05,0.01)
 # g.set_xticks(ticks); g.set_xticklabels(ticks)
 g.set_yticklabels(g.get_yticklabels(), fontsize = 7)
-ax.set_xlabel("cell count/total cells in brain (log)")
+ax.set_xlabel("% cells/$mm^3$ (log)")
 ax.set_ylabel("brain region")
 ax.set_title("channel 640 nm, p < 0.05 (uncorrected)")
 
-plt.savefig("/home/kepecs/Documents/640_boxplot_pval.svg", dpi = 300, bbox_inches="tight")
+plt.savefig("/home/kepecs/Documents/640_boxplot_pval_frac_of_density.svg", dpi = 300, bbox_inches="tight")
 
 #%%
 #get stripplot of all regions
-sois = ["Isocortex", "Midbrain"] #"Thalamus", "Hypothalamus", "Hindbrain"]
+sois = ["Isocortex", "Midbrain", "Thalamus", "Hypothalamus"]#, "Hindbrain"]
 ordered_sois = []
 for soi in sois:
     get_progeny(ontology_dict, soi, ordered_sois)
@@ -277,15 +277,15 @@ ordered_sois = [xx for xx in ordered_sois if any(analyse561.loc[analyse561.name 
 ordered_acronym = [analyse561.loc[analyse561.name == soi, "acronym"].values[0] for soi in ordered_sois]
     
 f, ax = plt.subplots(figsize=(30,7))
-g = sns.stripplot(x = "acronym", y = "frac_of_cell_count", hue = "group", order = ordered_acronym,
+g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
                   data = analyse561, orient = "v", size = 4, marker="D", alpha = 0.5)
 
-sns.stripplot(x = "acronym", y = "frac_of_cell_count", hue = "group", order = ordered_acronym,
+sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
                   data = analyse640, orient = "v", size = 4, alpha = 0.5)
 #shutoff ticks
 g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=5)# g.set_ytickslabels()
-# g.set_ylim([-0.001,0.02])
-plt.savefig("/home/kepecs/Documents/2channels_manhattan_plot_frac_of_cell_count.svg", 
+g.set_ylim([-0.001,0.02])
+plt.savefig("/home/kepecs/Documents/2channels_manhattan_plot_frac_of_density.svg", 
             dpi = 300, bbox_inches="tight")
 # #640
 # #sort by nonzero sois

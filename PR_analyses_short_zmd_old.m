@@ -3,14 +3,14 @@
 
 close all; clear all
 %list of animals in cage
-animals{1}='C:\Users\zahhr\Box\kepecs_lab_summer2021\behavior_data_balbc_progressive_ratio_w2\prw2_lh';
-animals{2}='C:\Users\zahhr\Box\kepecs_lab_summer2021\behavior_data_balbc_progressive_ratio_w2\prw2_lhrh';
-animals{3}='C:\Users\zahhr\Box\kepecs_lab_summer2021\behavior_data_balbc_progressive_ratio_w2\prw2_nh';
-animals{4}='C:\Users\zahhr\Box\kepecs_lab_summer2021\behavior_data_balbc_progressive_ratio_w2\prw2_rh';
-animals{5}='C:\Users\zahhr\Box\kepecs_lab_summer2021\behavior_data_balbc_progressive_ratio_w2\prw2_rhrh';
+animals{1}='/home/kepecs/Desktop/behavior_data_balbc_progressive_ratio_w2/prw2_lh';
+animals{2}='/home/kepecs/Desktop/behavior_data_balbc_progressive_ratio_w2/prw2_lhrh';
+animals{3}='/home/kepecs/Desktop/behavior_data_balbc_progressive_ratio_w2/prw2_nh';
+animals{4}='/home/kepecs/Desktop/behavior_data_balbc_progressive_ratio_w2/prw2_rh';
+animals{5}='/home/kepecs/Desktop/behavior_data_balbc_progressive_ratio_w2/prw2_rhrh';
 annames = ["LH", "LHRH", "NH", "RH", "RHRH"]; %mapping functions to animal names
 %dest for figures
-dst='C:\Users\zahhr\Box\kepecs_lab_summer2021\behavior_data_balbc_progressive_ratio_w2\analysis'
+dst='/home/kepecs/Desktop/analysis';
 back=20; %what is this for?
 rel=NaN(5,50);
 poke=NaN(5,50);
@@ -27,6 +27,9 @@ for ani=1:5
     %%%
     %find all session files in directory
     flist = dir(fullfile(animals{ani}, '*mat'));
+    % SORT BY DATE
+    [~,ind] = sort([flist.datenum]);
+    flist = flist(ind);
     %pad mean breaking point with nans just incase session date is corrupted??
     mbp = NaN(1,5);
     for f =1:length(flist)     
@@ -91,32 +94,56 @@ for ani=1:5
         rewa(ani,f)=si(2)*2+si(1)*14; %relative rewards
         poke(ani,f)=sum(si); %number of rewards/pokes
     end
+    %mark day of tumor cell injection
+    day = 22;
+    if contains(flist(1).name, "RHRH") %because of the behav files is corrupted
+        day = 21;
+    end
+    %format dates
+    dates = {flist.date};
+    for i=1:length(dates)
+        tmp = char(dates(i));
+        dates(i) = {tmp(1:6)};
+    end
 
     fig = figure();
-    subplot(221)
-    plot(mbp, 'LineWidth',2), hold on
+    subplot(221);
+    plot(mbp, 'k', 'LineWidth',2), hold on
+    xticks(1:length(mbp))
+    xticklabels(dates)
+    xline(day,'--r',{'C26','injection'});
     ylabel('mean breaking point')
     xlabel('training sessions')
+    hold off
     subplot(222)
-    plot( rel(ani,:), 'LineWidth',2), hold on
+    plot( rel(ani,:), 'k', 'LineWidth',2), hold on
+    xline(day,'--r',{'C26','injection'});
     ylabel('relation high/low')
     xlabel('training sessions')
+    xticks(1:length(mbp))
+    xticklabels(dates)
     subplot(223)
-    plot( rewa(ani,:), 'LineWidth',2), hold on
+    plot( rewa(ani,:), 'k','LineWidth',2), hold on
+    xline(day,'--r',{'C26','injection'});
     ylabel('water intake')
     xlabel('training sessions')
+    xticks(1:length(mbp))
+    xticklabels(dates)
     subplot(224)
-    plot( poke(ani,:), 'LineWidth',2), hold on
+    plot( poke(ani,:), 'k','LineWidth',2), hold on
+    xline(day,'--r',{'C26','injection'});
     ylabel('pokes')
     xlabel('training sessions')
+    xticks(1:length(mbp))
+    xticklabels(dates)
     sgtitle(sprintf('summary for %s', annames(ani)))
-    currfile = strcat(dst, '\', annames(ani), sprintf('_training_summary_sessions1-%d.jpeg', length(flist)));
+    currfile = strcat(dst, '/', annames(ani), sprintf('_training_summary_sessions1-%d.jpeg', length(flist)));
     saveas(fig, currfile)
     %save to larger array for plots across animals?
     pokeall(ani,:)=poke(ani,:);
     rewaall(ani,:)=rewa(ani,:);
     relall(ani,:)=rel(ani,:);
-    mbpall(ani,:)=mbp;
+    mbpall(ani,1:length(mbp))=mbp;
 end
 
 %%
@@ -129,7 +156,7 @@ legend('LHRH','NH','LH','RHRH','RH')
 
 subplot(222)
 ylabel('relation high/low')
-title('relation high/low rewards')
+title('relation high/low rewards') 
 
 subplot(223)
 ylabel('waterintake')

@@ -16,8 +16,9 @@ if not os.path.exists(dst): os.mkdir(dst)
 atl_pth = "/home/kepecs/python/ClearMap2/ClearMap/Resources/Atlas/ABA_25um_reference.tif"
 atl = tif.imread(atl_pth)
 atlz,atly,atlx = atl.shape
-animals = ["AA6-AK1d", #["AA6-AK1a", "AA6-AK1b", "AA6-AK1c", 
-           "AA6-AK3b", "AA6-AK3c"]
+animals = ["AA6-AK3b", "AA6-AK3c"]
+# ["AA6-AK1d", #["AA6-AK1a", "AA6-AK1b", "AA6-AK1c", 
+           # ]
 chs = [561, 640]
 for animal in animals:
     print(animal)
@@ -51,7 +52,7 @@ channel = 640
 #raw point overlay
 raw = "/home/kepecs/Documents/{0}/{0}_cells_{1}_filtered20.npy".format(animal, channel)
 src = "/mnt/uncertainty/{0}/{0}_{1}".format(animal, channel)
-zrng = [550,570]
+zrng = [250,260]
 pnts = np.load(raw)
 pnts = pnts[(pnts["z"]>=zrng[0]) & (pnts["z"]<zrng[1])]
 try:
@@ -75,7 +76,7 @@ tif.imsave("/home/kepecs/Documents/{0}_raw_{1}_z{2}-{3}.tif".format(animal,
                 channel, zrng[0],zrng[1]), merged.astype("uint16"))
 
 #%%
-import pandas as pd
+import pandas as pd 
 
 json = "/home/kepecs/python/ClearMap2/ClearMap/Resources/Atlas/ABA_annotation.json"
 allen = pd.read_json(json)
