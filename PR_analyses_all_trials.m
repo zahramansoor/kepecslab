@@ -200,6 +200,7 @@ end
 fig = figure();
 subplot(241);
 % alignt one with the lowest endpoint
+%mean across groups
 tumor = [reshape(mbpall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
     reshape(mbpall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(mbpall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(mbpall(1, 8, 1:endpoint(8)), 1, []);reshape(mbpall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
@@ -211,8 +212,8 @@ ctrlmean = mean(ctrl,1);
 ctrlstd = std(ctrl,1);
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
-xticks([1:8:min(endpoint),32])
-xticklabels(["back",-24,-16,-8,0])
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
 ylim([0,15])
 ylabel('mean breaking point')
 xlabel('days before endpoint')
@@ -222,24 +223,132 @@ hold off
    
 subplot(242)
 % alignt one with the lowest endpoint
-plot(reshape(relaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []), 'g', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []), 'g', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []), '--g', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 8, :), 1, []), '--g', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, []), '--g', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []), 'k', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []), 'k', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 7, endpoint(7)-min(endpoint)+1:endpoint(7)), 1, []), '--k', 'LineWidth',2), hold on
-plot(reshape(relaall(1, 9, endpoint(9)-min(endpoint)+1:endpoint(9)), 1, []), '--k', 'LineWidth',2), hold on
-xticks([1:8:min(endpoint),32])
-xticklabels(["back",-24,-16,-8,0])
+%mean across groups
+tumor = [reshape(relaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(relaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(relaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+    reshape(relaall(1, 8, 1:endpoint(8)), 1, []);reshape(relaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
+tumormean = mean(tumor,1);
+tumorstd = std(tumor, 1);
+ctrl = [reshape(relaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
+    reshape(relaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
+ctrlmean = mean(ctrl,1);
+ctrlstd = std(ctrl,1);
+errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
+errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
 ylabel('relation high/low')
 xlabel('days before endpoint')
 title('relation high/low rewards')
-legend('LHW2', 'NHW2', 'LHW1', 'NHW1', 'RHRHW1', ...
-    'RHRHW2', 'RHW2', 'LHRHW1', 'RHW1', 'Location','northwest','NumColumns',2)
+legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
 hold off
 
+subplot(243)
+% alignt one with the lowest endpoint
+%mean across groups
+tumor = [reshape(rewaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(rewaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(rewaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+    reshape(rewaall(1, 8, 1:endpoint(8)), 1, []);reshape(rewaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
+tumormean = mean(tumor,1);
+tumorstd = std(tumor, 1);
+ctrl = [reshape(rewaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
+    reshape(rewaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
+ctrlmean = mean(ctrl,1);
+ctrlstd = std(ctrl,1);
+errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
+errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
+ylabel('water intake')
+title('water intake')
+xlabel('days before endpoint')
+legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
+hold off
+
+subplot(244)
+% alignt one with the lowest endpoint
+%mean across groups
+tumor = [reshape(pokeall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(pokeall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(pokeall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+    reshape(pokeall(1, 8, 1:endpoint(8)), 1, []);reshape(pokeall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
+tumormean = mean(tumor,1);
+tumorstd = std(tumor, 1);
+ctrl = [reshape(pokeall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
+    reshape(pokeall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
+ctrlmean = mean(ctrl,1);
+ctrlstd = std(ctrl,1);
+errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
+errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
+ylabel('water intake')
+title('water intake')
+xlabel('days before endpoint')
+legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
+hold off
+
+subplot(245)
+% alignt one with the lowest endpoint
+%mean across groups
+tumor = [reshape(rxinits(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(rxinits(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(rxinits(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+    reshape(rxinits(1, 8, 1:endpoint(8)), 1, []);reshape(rxinits(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
+tumormean = mean(tumor,1);
+tumorstd = std(tumor, 1);
+ctrl = [reshape(rxinits(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
+    reshape(rxinits(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
+ctrlmean = mean(ctrl,1);
+ctrlstd = std(ctrl,1);
+errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
+errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
+ylabel('mean reaction time (s)')
+title('reaction time to initialize trial')
+legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
+hold off
+
+subplot(246)
+% alignt one with the lowest endpoint
+%mean across groups
+tumor = [reshape(rxsides(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(rxsides(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(rxsides(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+    reshape(rxsides(1, 8, 1:endpoint(8)), 1, []);reshape(rxsides(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
+tumormean = mean(tumor,1);
+tumorstd = std(tumor, 1);
+ctrl = [reshape(rxsides(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
+    reshape(rxsides(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
+ctrlmean = mean(ctrl,1);
+ctrlstd = std(ctrl,1);
+errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
+errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
+ylabel('mean reaction time (s)')
+title('reaction time to poke port')
+xlabel('days before endpoint')
+
+subplot(247)
+% alignt one with the lowest endpoint
+%mean across groups
+tumor = [reshape(inactivesessions(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(inactivesessions(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(inactivesessions(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+    reshape(inactivesessions(1, 8, 1:endpoint(8)), 1, []);reshape(inactivesessions(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
+tumormean = mean(tumor,1);
+tumorstd = std(tumor, 1);
+ctrl = [reshape(inactivesessions(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
+    reshape(inactivesessions(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
+ctrlmean = mean(ctrl,1);
+ctrlstd = std(ctrl,1);
+errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
+errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
+xticks([1:8:min(endpoint)-3,30,31,32])
+xticklabels(["back",-23,-15,-7,-2,-1,0])
+ylabel('# of inactive trials')
+title('total number of inactive trials per day')
+xlabel('days before endpoint')
+
+%%
 subplot(243)
 % alignt one with the lowest endpoint
 plot(reshape(rewaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []), 'g', 'LineWidth',2), hold on
@@ -432,6 +541,7 @@ legend('last day', 'last day-1', 'last day-2', 'last day-22')
 % plot(cell2mat(rewnums(1,9,endpoint(9))),'--k','LineWidth',2),hold on
 
 %%
+%to plot per animal
 plot(reshape(rewaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []), 'g', 'LineWidth',2), hold on
 plot(reshape(rewaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []), 'g', 'LineWidth',2), hold on
 plot(reshape(rewaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []), '--g', 'LineWidth',2), hold on
