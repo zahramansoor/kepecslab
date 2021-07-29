@@ -205,11 +205,11 @@ tumor = [reshape(mbpall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);.
     reshape(mbpall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(mbpall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(mbpall(1, 8, 1:endpoint(8)), 1, []);reshape(mbpall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(mbpall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(mbpall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
@@ -228,11 +228,11 @@ tumor = [reshape(relaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);
     reshape(relaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(relaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(relaall(1, 8, 1:endpoint(8)), 1, []);reshape(relaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(relaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(relaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
@@ -250,11 +250,11 @@ tumor = [reshape(rewaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);
     reshape(rewaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(rewaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(rewaall(1, 8, 1:endpoint(8)), 1, []);reshape(rewaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(rewaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(rewaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
@@ -272,17 +272,17 @@ tumor = [reshape(pokeall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);
     reshape(pokeall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(pokeall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(pokeall(1, 8, 1:endpoint(8)), 1, []);reshape(pokeall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(pokeall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(pokeall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
 xticklabels(["back",-23,-15,-7,-2,-1,0])
-ylabel('water intake')
-title('water intake')
+ylabel('pokes')
+title('pokes')
 xlabel('days before endpoint')
 legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
 hold off
@@ -294,16 +294,17 @@ tumor = [reshape(rxinits(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);
     reshape(rxinits(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(rxinits(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(rxinits(1, 8, 1:endpoint(8)), 1, []);reshape(rxinits(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(rxinits(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(rxinits(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
 xticklabels(["back",-23,-15,-7,-2,-1,0])
 ylabel('mean reaction time (s)')
+xlabel('days before endpoint')
 title('reaction time to initialize trial')
 legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
 hold off
@@ -315,11 +316,11 @@ tumor = [reshape(rxsides(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);
     reshape(rxsides(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(rxsides(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(rxsides(1, 8, 1:endpoint(8)), 1, []);reshape(rxsides(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(rxsides(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(rxsides(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
@@ -327,6 +328,7 @@ xticklabels(["back",-23,-15,-7,-2,-1,0])
 ylabel('mean reaction time (s)')
 title('reaction time to poke port')
 xlabel('days before endpoint')
+legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
 
 subplot(247)
 % alignt one with the lowest endpoint
@@ -335,11 +337,11 @@ tumor = [reshape(inactivesessions(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1))
     reshape(inactivesessions(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []);reshape(inactivesessions(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
     reshape(inactivesessions(1, 8, 1:endpoint(8)), 1, []);reshape(inactivesessions(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
-tumorstd = std(tumor, 1);
+tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(inactivesessions(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
     reshape(inactivesessions(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, [])];
 ctrlmean = mean(ctrl,1);
-ctrlstd = std(ctrl,1);
+ctrlstd = std(ctrl,1)/sqrt(length(ctrl(:,1)));
 errorbar(1:length(tumormean),tumormean, tumorstd, 'g', 'LineWidth',2), hold on
 errorbar(1:length(ctrlmean),ctrlmean, ctrlstd, 'k', 'LineWidth',2), hold on
 xticks([1:8:min(endpoint)-3,30,31,32])
@@ -347,7 +349,14 @@ xticklabels(["back",-23,-15,-7,-2,-1,0])
 ylabel('# of inactive trials')
 title('total number of inactive trials per day')
 xlabel('days before endpoint')
-
+legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
+ax = subplot(248);
+text(0,0.5,'tumor group, n = 5, control group n = 2');
+text(0,0.3, 'error bars represent standard error');
+set(ax,'visible','off')
+sgtitle('behavior variables for progressive ratio task')
+currfile = strcat(dst, '/', "behavior_variables_summary_prw1_prw2.fig");
+saveas(fig, currfile)
 %%
 subplot(243)
 % alignt one with the lowest endpoint
