@@ -562,15 +562,15 @@ plot(cell2mat(rewnums(1,4,endpoint(4))),'LineWidth',2),hold on
 plot(cell2mat(rewnums(1,4,endpoint(4)-1)),'LineWidth',2),hold on
 plot(cell2mat(rewnums(1,4,endpoint(4)-2)),'LineWidth',2),hold on
 plot(cell2mat(rewnums(1,4,endpoint(4)-20)),'k','LineWidth',2),hold on
-title('trial activity for RHRHW2 at last days')
+title('trial activity for RHRHW2')
 xlabel('trial number')
 ylabel('CurRewardNum')
 legend('last day', 'last day-1', 'last day-2', 'last day-20')
 subplot(337)
-plot(cell2mat(rewnums(1,2,endpoint(2))),'LineWidth',2),hold on
-plot(cell2mat(rewnums(1,2,endpoint(2)-1)),'LineWidth',2),hold on
-plot(cell2mat(rewnums(1,2,endpoint(2)-2)),'LineWidth',2),hold on
-plot(cell2mat(rewnums(1,2,endpoint(2)-20)),'k','LineWidth',2),hold on
+plot(cell2mat(rewnums(1,5,endpoint(5))),'LineWidth',2),hold on
+plot(cell2mat(rewnums(1,5,endpoint(5)-1)),'LineWidth',2),hold on
+plot(cell2mat(rewnums(1,5,endpoint(5)-2)),'LineWidth',2),hold on
+plot(cell2mat(rewnums(1,5,endpoint(5)-20)),'k','LineWidth',2),hold on
 title('trial activity for RHW2')
 xlabel('trial number')
 ylabel('CurRewardNum')
