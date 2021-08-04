@@ -105,13 +105,15 @@ for ani=1:10
                     end
                 end
             end
-            %bp(t,isnan(bp))=[]; %don't need to do this as taking nanmean
-            %anyways
+            %bp(isnan(bp))=[]; %don't need to do this as taking nanmean
+            %anyways         
+            %collect bps for cdf
+            bps{t,ani,f} = bp;
             rewnums{t,ani,f} = rewnum;
             rxinits(t,ani,f) = nanmean(rxinit);
             rxsides(t,ani,f) = nanmean(rxside);
             inactivesessions(t,ani,f) = sum(~isnan(inactivetime));
-            mbp(t,f)=nanmean(bp(t,trial)); %mean breaking point for that specific session for 1 animal
+            mbp(t,f)=mean(bp(t,trial)); %mean breaking point for that specific session for 1 animal
             rewall{t,ani,f}=rew(t,trial); %all rewards
 
             si(1)=nansum(rewall{t,ani,f}==1);
@@ -166,25 +168,17 @@ for ani=1:10
     rewaall(1, ani, 1:length(rewa(1, ani,:))) = reshape(rewa(1, ani,:), 1, []);
     relaall(1, ani, 1:length(rel(1, ani,:))) = reshape(rel(1, ani,:), 1, []);
     mbpall(1, ani, 1:length(mbp(1, :))) = mbp(1, :);
+    bpsall(1, ani, 1:length(bps(1, ani, :))) = reshape(bps(1,ani,:),1,[]);
 end
 
 %%
-flist = dir(fullfile(animals{2}, '*mat'));
-% SORT BY DATE
-[~,ind] = sort([flist.datenum]);
-flist = flist(ind);
-%get all dates
-dates = {flist.date};
-for i=1:length(dates)
-    tmp = char(dates(i));
-    dates(i) = {tmp(1:6)};
-end
 %specify endpoint for animals that have reached it
 %in order of animal name
 %annames = ["LHW2", "LHRHW2", "NHW2", "RHW2", "RHRHW2", ...
 %          "LHW1", "LHRHW1", "NHW1", "RHW1", "RHRHW1"]; %mapping functions to animal names
+%old cohort = NH, LH and RHRH were cachectic
 %may 13 w1RH behavior file deleted (incomplete data)
-endpoint = [47, length(dates), 38, length(dates), 37,...
+endpoint = [47, 53, 38, 53, 37,...
             33,45,32,46,52];%endpoints of old cohort same as total trials...
 %get measures only until endpoint and nan the rest of the days
 for i=1:length(endpoint)
@@ -197,15 +191,178 @@ for i=1:length(endpoint)
     inactivesessions(1,i,endpoint(i)+1:length(inactivesessions(1,i,:))) = NaN;
 end
 
-fig = figure();
+%figure for cdfs of bps for cachexia and control mice
+fig1 = figure();
+subplot(221);
+%tumor cdfs
+bpcdf = cell2mat(bpsall(1,1,endpoint(1)));
+bpcdf(isnan(bpcdf))=[];
+[N1,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N1),'g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,2,endpoint(2)));
+bpcdf(isnan(bpcdf))=[];
+[N2,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N2),':g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,3,endpoint(3)));
+bpcdf(isnan(bpcdf))=[];
+[N3,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N3),'--g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,6,endpoint(6)));
+bpcdf(isnan(bpcdf))=[];
+[N6,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N6),'y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,8,endpoint(8)));
+bpcdf(isnan(bpcdf))=[];
+[N8,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N8),':y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,10,endpoint(10)));
+bpcdf(isnan(bpcdf))=[];
+[N10,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N10),'--y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,4,endpoint(4)));
+bpcdf(isnan(bpcdf))=[];
+[N4,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N4),'k','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,5,endpoint(5)));
+bpcdf(isnan(bpcdf))=[];
+[N5,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N5),':k','LineWidth',2)
+legend("LHW2 last day","LHRHW2 last day","NHW2 last day", "LHW1 last day", ...
+    "NHW1 last day", "RHRHW1 last day","RHW2 last day", "RHRHW2 last day");
+title('cdf of breaking points on last day')
+xlim([0,40])
+xlabel('breaking point')
+ylabel('probability')
+
+subplot(222);
+bpcdf = cell2mat(bpsall(1,1,endpoint(1)-2));
+bpcdf(isnan(bpcdf))=[];
+[N1,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N1),'g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,2,endpoint(2)-2));
+bpcdf(isnan(bpcdf))=[];
+[N2,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N2),':g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,3,endpoint(3)-2));
+bpcdf(isnan(bpcdf))=[];
+[N3,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N3),'--g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,6,endpoint(6)-2));
+bpcdf(isnan(bpcdf))=[];
+[N6,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N6),'y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,8,endpoint(8)-2));
+bpcdf(isnan(bpcdf))=[];
+[N8,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N8),':y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,10,endpoint(10)-2));
+bpcdf(isnan(bpcdf))=[];
+[N10,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N10),'--y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,4,endpoint(4)-2));
+bpcdf(isnan(bpcdf))=[];
+[N4,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N4),'k','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,5,endpoint(5)-2));
+bpcdf(isnan(bpcdf))=[];
+[N5,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N5),':k','LineWidth',2)
+legend("LHW2 last day-2","LHRHW2 last day-2","NHW2 last day-2", "LHW1 last day-2", ...
+    "NHW1 last day-2", "RHRHW1 last day-2","RHW2 last day-2", "RHRHW2 last day-2");
+title('cdf of breaking points on last day-2')
+xlim([0,40])
+xlabel('breaking point')
+ylabel('probability')
+
+subplot(223);
+bpcdf = cell2mat(bpsall(1,1,endpoint(1)-15));
+bpcdf(isnan(bpcdf))=[];
+[N1,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N1),'g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,2,endpoint(2)-15));
+bpcdf(isnan(bpcdf))=[];
+[N2,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N2),':g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,3,endpoint(3)-15));
+bpcdf(isnan(bpcdf))=[];
+[N3,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N3),'--g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,6,endpoint(6)-15));
+bpcdf(isnan(bpcdf))=[];
+[N6,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N6),'y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,8,endpoint(8)-15));
+bpcdf(isnan(bpcdf))=[];
+[N8,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N8),':y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,10,endpoint(10)-15));
+bpcdf(isnan(bpcdf))=[];
+[N10,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N10),'--y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,4,endpoint(4)-15));
+bpcdf(isnan(bpcdf))=[];
+[N4,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N4),'k','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,5,endpoint(5)-15));
+bpcdf(isnan(bpcdf))=[];
+[N5,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N5),':k','LineWidth',2)
+legend("LHW2 last day-15","LHRHW2 last day-15","NHW2 last day-15", "LHW1 last day-15", ...
+    "NHW1 last day-15", "RHRHW1 last day-15","RHW2 last day-15", "RHRHW2 last day-15");
+title('cdf of breaking points on last day-15')
+xlim([0,40])
+xlabel('breaking point')
+ylabel('probability')
+
+subplot(224);
+bpcdf = cell2mat(bpsall(1,1,endpoint(1)-30));
+bpcdf(isnan(bpcdf))=[];
+[N1,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N1),'g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,2,endpoint(2)-30));
+bpcdf(isnan(bpcdf))=[];
+[N2,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N2),':g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,3,endpoint(3)-30));
+bpcdf(isnan(bpcdf))=[];
+[N3,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N3),'--g','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,6,endpoint(6)-30));
+bpcdf(isnan(bpcdf))=[];
+[N6,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N6),'y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,8,endpoint(8)-30));
+bpcdf(isnan(bpcdf))=[];
+[N8,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N8),':y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,10,endpoint(10)-30));
+bpcdf(isnan(bpcdf))=[];
+[N10,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N10),'--y','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,4,endpoint(4)-30));
+bpcdf(isnan(bpcdf))=[];
+[N4,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N4),'k','LineWidth',2); hold on
+bpcdf = cell2mat(bpsall(1,5,endpoint(5)-30));
+bpcdf(isnan(bpcdf))=[];
+[N5,~] = histcounts(bpcdf,'Normalization','probability');
+plot(cumsum(N5),':k','LineWidth',2)
+legend("LHW2 last day-30","LHRHW2 last day-30","NHW2 last day-30", "LHW1 last day-30", ...
+    "NHW1 last day-30", "RHRHW1 last day-30","RHW2 last day-30", "RHRHW2 last day-30");
+title('cdf of breaking points on last day-30 (pre-tumor)')
+xlim([0,40])
+xlabel('breaking point')
+ylabel('probability')
+%%
+fig2 = figure();
 subplot(241);
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(mbpall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(mbpall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []);...
     reshape(mbpall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% from other cohort
-% ;reshape(mbpall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(mbpall(1, 8, 1:endpoint(8)), 1, []);reshape(mbpall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+%     reshape(mbpall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+%   reshape(mbpall(1, 8, endpoint(8)-min(endpoint)+1:endpoint(8)), 1, []);reshape(mbpall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(mbpall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -227,9 +384,10 @@ subplot(242)
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(relaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(relaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []);...
     reshape(relaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% ;reshape(relaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(relaall(1, 8, 1:endpoint(8)), 1, []);reshape(relaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+%     reshape(relaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+%   reshape(relaall(1, 8, endpoint(8)-min(endpoint)+1:endpoint(8)), 1, []);reshape(relaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(relaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -250,9 +408,11 @@ subplot(243)
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(rewaall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
-    reshape(rewaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% ;reshape(rewaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(rewaall(1, 8, 1:endpoint(8)), 1, []);reshape(rewaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+    reshape(rewaall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []); ...
+    reshape(rewaall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, []); ...
+    reshape(rewaall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, [])];
+%     reshape(rewaall(1, 8, endpoint(8)-min(endpoint)+1:endpoint(8)), 1, []); ...
+%     reshape(rewaall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(rewaall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -273,9 +433,10 @@ subplot(244)
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(pokeall(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
-    reshape(pokeall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% ;reshape(pokeall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(pokeall(1, 8, 1:endpoint(8)), 1, []);reshape(pokeall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+    reshape(pokeall(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []); ...
+reshape(pokeall(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
+%     reshape(pokeall(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+%     reshape(pokeall(1, 8, endpoint(8)-min(endpoint)+1:endpoint(8)), 1, []);reshape(pokeall(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(pokeall(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -296,9 +457,11 @@ subplot(245)
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(rxinits(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(rxinits(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []);...
     reshape(rxinits(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% ;reshape(rxinits(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(rxinits(1, 8, 1:endpoint(8)), 1, []);reshape(rxinits(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+%     reshape(rxinits(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+%     reshape(rxinits(1, 8, endpoint(8)-min(endpoint)+1:endpoint(8)), 1, []); ...
+%     reshape(rxinits(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(rxinits(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -319,9 +482,10 @@ subplot(246)
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(rxsides(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(rxsides(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []);...
     reshape(rxsides(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% ;reshape(rxsides(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(rxsides(1, 8, 1:endpoint(8)), 1, []);reshape(rxsides(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+%     reshape(rxsides(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+%     reshape(rxsides(1, 8, 1:endpoint(8)), 1, []);reshape(rxsides(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(rxsides(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -341,9 +505,10 @@ subplot(247)
 % alignt one with the lowest endpoint
 %mean across groups
 tumor = [reshape(inactivesessions(1, 1, endpoint(1)-min(endpoint)+1:endpoint(1)), 1, []);...
+    reshape(inactivesessions(1, 2, endpoint(2)-min(endpoint)+1:endpoint(2)), 1, []);...
     reshape(inactivesessions(1, 3, endpoint(3)-min(endpoint)+1:endpoint(3)), 1, [])];
-% reshape(inactivesessions(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
-%     reshape(inactivesessions(1, 8, 1:endpoint(8)), 1, []);reshape(inactivesessions(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])
+%     reshape(inactivesessions(1, 6, endpoint(6)-min(endpoint)+1:endpoint(6)), 1, []);...
+%     reshape(inactivesessions(1, 8, endpoint(8)-min(endpoint)+1:endpoint(8)), 1, []);reshape(inactivesessions(1, 10, endpoint(10)-min(endpoint)+1:endpoint(10)), 1, [])];
 tumormean = mean(tumor,1);
 tumorstd = std(tumor, 1)/sqrt(length(tumor(:,1)));
 ctrl = [reshape(inactivesessions(1, 4, endpoint(4)-min(endpoint)+1:endpoint(4)), 1, []);...
@@ -359,11 +524,11 @@ title('total number of inactive trials per day')
 xlabel('days before endpoint')
 legend('tumor', 'ctrl','Location','northwest','NumColumns',2)
 ax = subplot(248);
-text(0,0.5,'tumor group, n=2, control group n=2');
+text(0,0.5,'tumor group, n=3, control group n=2');
 text(0,0.3, 'error bars represent standard error');
 set(ax,'visible','off')
 sgtitle('behavior variables for progressive ratio task')
-currfile = strcat(dst, '/', "behavior_variables_summary_prw1_prw2.fig");
+currfile = strcat(dst, '/', "behavior_variables_summary_prw2.fig");
 saveas(fig, currfile)
 %%
 
