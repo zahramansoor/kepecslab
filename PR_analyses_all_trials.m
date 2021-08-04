@@ -190,8 +190,8 @@ for i=1:length(endpoint)
     rxinits(1,i,endpoint(i)+1:length(rxinits(1,i,:))) = NaN;
     inactivesessions(1,i,endpoint(i)+1:length(inactivesessions(1,i,:))) = NaN;
 end
-
 %figure for cdfs of bps for cachexia and control mice
+%idea is to see whether the distribution of breaking point changes
 fig1 = figure();
 subplot(221);
 %tumor cdfs
@@ -354,7 +354,224 @@ xlim([0,40])
 xlabel('breaking point')
 ylabel('probability')
 %%
+%take mean across group, and plot with time in different colors
+%endpoint
+clear bpprobs;
+%tumor group
+tumorind = [1 2 3 6 8 10]; % 6 8 10 = prw1 cohort
+for i=1:length(tumorind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,tumorind(i),endpoint(tumorind(i))));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0; %pad non representative numbers with zeros
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs1=mean(cdfs,1);
+%reset for next timepoint
+clear bpprobs;
+for i=1:length(tumorind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,tumorind(i),endpoint(tumorind(i))-2));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs2=mean(cdfs,1);
+%reset for next timepoint
+clear bpprobs;
+for i=1:length(tumorind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,tumorind(i),endpoint(tumorind(i))-7));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs21=mean(cdfs,1);
+%reset for next timepoint
+clear bpprobs;
+for i=1:length(tumorind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,tumorind(i),endpoint(tumorind(i))-15));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs3=mean(cdfs,1);
+clear bpprobs;
+for i=1:length(tumorind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,tumorind(i),endpoint(tumorind(i))-30));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs4=mean(cdfs,1);
+clear bpprobs;
+ctrlind = [4 5];
+for i=1:length(ctrlind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,ctrlind(i),endpoint(ctrlind(i))));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs5=mean(cdfs,1); %control timepoint 1
+clear bpprobs;
+for i=1:length(ctrlind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,ctrlind(i),endpoint(ctrlind(i))-2));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs6=mean(cdfs,1); %control timepoint 2
+clear bpprobs
+for i=1:length(ctrlind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,ctrlind(i),endpoint(ctrlind(i))-15));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs7=mean(cdfs,1); %control timepoint 3
+clear bpprobs
+for i=1:length(ctrlind)
+    bpprob = [];
+    bpprob = cell2mat(bpsall(1,ctrlind(i),endpoint(ctrlind(i))-30));
+    bpprob(isnan(bpprob))=[];
+    [N,~] = histcounts(bpprob,'Normalization','probability');
+    bpprobs{i} = N;
+end
+for i=1:length(bpprobs)
+    maxl(i) = length(bpprobs{i});
+end
+maxl = max(maxl);  
+for i=1:length(bpprobs)
+    bpprobs{i}(length(bpprobs{i})+1:maxl) = 0;
+end
+bpprobs=cell2mat(bpprobs');
+cdfs=zeros(size(bpprobs));
+for j=1:length(bpprobs(:,1))
+    cdfs(j,:) = cumsum(bpprobs(j,:));
+end
+meancdfs8=mean(cdfs,1); %control timepoint 4
+
 fig2 = figure();
+plot(meancdfs1,"Color",[0 0.5 0],"LineWidth",3); hold on
+plot(meancdfs2,"Color",[0 0.7 0],"LineWidth",3); hold on
+plot(meancdfs21,"Color",[0 0.8 0],"LineWidth",3); hold on
+plot(meancdfs3,"Color",[0 0.9 0],"LineWidth",3); hold on
+plot(meancdfs4,"Color",[0 1 0],"LineWidth",3); hold on
+plot(meancdfs5,"Color",[0 0 0],"LineWidth",3); hold on
+plot(meancdfs6,"Color",[0.5 0.5 0.5],"LineWidth",3); hold on
+plot(meancdfs7,"Color",[0.7 0.7 0.7],"LineWidth",3); hold on
+plot(meancdfs8,"Color",[0.9 0.9 0.9],"LineWidth",3); hold on
+legend("last day", "last day-2", "last day-10","last day-15", "last day-30",...
+    "last day", "last day-2", "last day-15", "last day-30");
+xlabel("breaking point")
+ylabel("probability")
+title("cdf of breaking point over training and cancer progression")
+text(25,0.2,'tumor group, n=6, control group n=2');
+currfile = strcat(dst, '/', "cdf_over_time_prw1_prw2.fig");
+saveas(fig2, currfile)
+%%
+fig3 = figure();
 subplot(241);
 % alignt one with the lowest endpoint
 %mean across groups
