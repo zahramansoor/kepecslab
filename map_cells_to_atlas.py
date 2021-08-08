@@ -34,23 +34,23 @@ def findkeys(node, kv):
             for x in findkeys(j, kv):
                 yield x
 
-def get_progeny(dic,parent_structure,progeny_list):
+def get_progeny(dic,key,parent_structure,progeny_list):
     """austin hoag's function to get progeny from allen hierarchy"""
     if "msg" in list(dic.keys()): 
         dic = dic["msg"][0]
     
-    name = dic.get("name")
+    name = dic.get(key)
     children = dic.get("children")
     if name == parent_structure:
         for child in children: # child is a dict
-            child_name = child.get("name")
+            child_name = child.get(key)
             progeny_list.append(child_name)
-            get_progeny(child,parent_structure=child_name,progeny_list=progeny_list)
+            get_progeny(child,key,parent_structure=child_name,progeny_list=progeny_list)
         return
     
     for child in children:
-        child_name = child.get("name")
-        get_progeny(child,parent_structure=parent_structure,progeny_list=progeny_list)
+        child_name = child.get(key)
+        get_progeny(child,key,parent_structure=parent_structure,progeny_list=progeny_list)
     return 
 
 #%%
@@ -69,6 +69,12 @@ anndf = pd.DataFrame()
 for k,v in ontology_dict.items():    
     if k != "children": #ignore children ids, can get from json
         anndf[k] = list(findkeys(ontology_dict, k))
+#drop ventricular systems and fiber tracts from subsequent analysis!!
+idsexclude = [1009,73]; progeny=[]
+[get_progeny(ontology_dict, "id", iid, progeny) for iid in idsexclude]
+idsexclude = idsexclude + progeny
+indc = [anndf[anndf.id == iid].index.values[0] for iid in idsexclude]
+anndf = anndf.drop(index=indc)
 #get total counts per region
 anndf["total_voxels"] = [ann[ann==iid].shape[0] for iid in anndf.id.values]
 df = anndf.copy()
@@ -87,12 +93,21 @@ for animal in animals:
     for pnt in pnts:
         pnt = pnt.astype(int)
         try:
-            labels.append(ann[pnt[0],pnt[1],pnt[2]])
+            labels.append(ann[pnt[0],pnt[1],pnt[2]]) #assign label to point
         except Exception as e:
             print(e)
     counts = Counter(labels)
+    #sum up to hierarchy
+    exclude = [0,997,8] #do not sum up all structures or cells outside defined regions...
     for k,v in counts.items():
-        animaldf.loc[animaldf.id == k, "cell_count"] = v #assign counts
+        progeny=[] #init progeny list for that structure
+        get_progeny(dic=ontology_dict,key="id",parent_structure=k,progeny_list=progeny)
+        if len(progeny)>0 and k not in exclude:
+            progencounts=[m for progen in progeny for l,m in counts.items() if l==progen] #get progeny counts
+            progencounts.append(v) #add counts from main structure
+            animaldf.loc[animaldf.id == k, "cell_count"] = np.sum(np.array(progencounts)) #assign counts
+        else:
+            animaldf.loc[animaldf.id == k, "cell_count"] = v #assign counts
     animaldfs.append(animaldf)
 #concat
 animaldfmaster561 = pd.concat(animaldfs)
@@ -116,8 +131,17 @@ for animal in animals:
         except Exception as e:
             print(e)
     counts = Counter(labels)
+    #sum up to hierarchy
+    exclude = [0,997,8] #do not sum up all structures or cells outside defined regions...
     for k,v in counts.items():
-        animaldf.loc[animaldf.id == k, "cell_count"] = v #assign counts
+        progeny=[] #init progeny list for that structure
+        get_progeny(dic=ontology_dict,key="id",parent_structure=k,progeny_list=progeny)
+        if len(progeny)>0 and k not in exclude:
+            progencounts=[m for progen in progeny for l,m in counts.items() if l==progen] #get progeny counts
+            progencounts.append(v) #add counts from main structure
+            animaldf.loc[animaldf.id == k, "cell_count"] = np.sum(np.array(progencounts)) #assign counts
+        else:
+            animaldf.loc[animaldf.id == k, "cell_count"] = v #assign counts
     animaldfs.append(animaldf)
 #concat
 animaldfmaster640 = pd.concat(animaldfs)
@@ -267,25 +291,24 @@ plt.savefig("/home/kepecs/Documents/640_boxplot_pval_frac_of_density.svg", dpi =
 
 #%%
 #get stripplot of all regions
-sois = ["Isocortex", "Midbrain", "Thalamus", "Hypothalamus"]#, "Hindbrain"]
+sois = ["Isocortex", "Midbrain", "Thalamus", "Hypothalamus", "Hindbrain"]
 ordered_sois = []
 for soi in sois:
-    get_progeny(ontology_dict, soi, ordered_sois)
+    get_progeny(ontology_dict, "name", soi, ordered_sois)
 #561    
 #sort by nonzero sois
 ordered_sois = [xx for xx in ordered_sois if any(analyse561.loc[analyse561.name == xx, "cell_count"] > 0)]
 ordered_acronym = [analyse561.loc[analyse561.name == soi, "acronym"].values[0] for soi in ordered_sois]
     
-f, ax = plt.subplots(figsize=(30,7))
-g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
-                  data = analyse561, orient = "v", size = 4, marker="D", alpha = 0.5)
-
+f, ax = plt.subplots(figsize=(40,7))
 sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
                   data = analyse640, orient = "v", size = 4, alpha = 0.5)
+g = sns.stripplot(x = "acronym", y = "frac_of_density", hue = "group", order = ordered_acronym,
+                  data = analyse561, orient = "v", size = 4, marker="D", alpha = 0.5)
 #shutoff ticks
 g.set_xticklabels(ordered_acronym, rotation = 90, Fontsize=5)# g.set_ytickslabels()
 g.set_ylim([-0.001,0.02])
-plt.savefig("/home/kepecs/Documents/2channels_manhattan_plot_frac_of_density.svg", 
+plt.savefig("/home/kepecs/Documents/2channels_manhattan_plot_frac_of_density_allregions.svg", 
             dpi = 300, bbox_inches="tight")
 # #640
 # #sort by nonzero sois

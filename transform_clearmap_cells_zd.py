@@ -165,7 +165,7 @@ def unpack_pnts(points_file, dst):
 #%%
 
 if __name__ == "__main__":
-    animals = ["AA6-AK3b", "AA6-AK3c"]#, "AA6-AK3b", "AA6-AK3c"]
+    animals = ["AA6-AK1b"]#, "AA6-AK3b", "AA6-AK3c"]
     chs = [561, 640]
 
     for animal in animals:
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                 z,y,x=pnt
                 cell[z,y,x] = 1
             #flip z and y
-            cell_oriented = np.flip(cell, (1))    
+            cell_oriented = np.flip(cell, (1,2))    
             #get coordinates again
             downsized_pnts_sag_oriented = np.nonzero(cell_oriented)
             downsized_pnts_sag_oriented = np.array([downsized_pnts_sag_oriented[0],downsized_pnts_sag_oriented[1],downsized_pnts_sag_oriented[2]]).T

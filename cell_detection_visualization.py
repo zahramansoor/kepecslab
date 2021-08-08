@@ -16,7 +16,7 @@ if not os.path.exists(dst): os.mkdir(dst)
 atl_pth = "/home/kepecs/python/ClearMap2/ClearMap/Resources/Atlas/ABA_25um_reference.tif"
 atl = tif.imread(atl_pth)
 atlz,atly,atlx = atl.shape
-animals = ["AA6-AK3b", "AA6-AK3c"]
+animals = ["AA6-AK1b"]#, "AA6-AK1c", "AA6-AK1d", "AA6-AK3b", "AA6-AK3c"]
 # ["AA6-AK1d", #["AA6-AK1a", "AA6-AK1b", "AA6-AK1c", 
            # ]
 chs = [561, 640]
