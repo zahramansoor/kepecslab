@@ -9,9 +9,9 @@ Created on Tue May 17 10:57:45 2022
 import tifffile as tif, matplotlib.pyplot as plt, numpy as np, os, pandas as pd, json, copy
 
 #%%
-src = "/home/kepecs/Documents/cadaverine_slices"
-ims = [os.path.join(src, xx) for xx in os.listdir(src) if "ch01" in xx and "pr2w2" in xx]
-for im in ims:
+src = "/home/kepecs/Documents/cadaverine_slices/original"
+ims = [os.path.join(src, xx) for xx in os.listdir(src) if "done" not in xx and "ch00" in xx]
+for im in ims[22:]:
     print(im)
     dst = "/home/kepecs/Documents/cadaverine_slices/modified_ch01"
     img = tif.imread(im)
@@ -21,6 +21,7 @@ for im in ims:
     imgb[int(pad/2):imgb.shape[0]-int(pad/2), int(pad/2):imgb.shape[1]-int(pad/2)]=img
     plt.imshow(imgb)
     tif.imsave(os.path.join(dst, os.path.basename(im)), imgb.astype('uint16'))
+    del(img); del(imgb)
 
 #%%
 #postprocessing
@@ -57,23 +58,29 @@ with open(ontology_file) as json_file:
 for csv in csvs:
     nm = os.path.basename(csv)[:-18]
     csv_ = pd.read_csv(csv)
-    csv_soi = csv_["name"].value_counts()/len(csv_) #% cell counts
+    csv_soi = csv_["name"].value_counts() # cell counts
+    #csv_soi = csv_["name"].value_counts()/len(csv_) #% cell counts
     for soi in csv_soi.index:
-        try: #if an entry already exists
-            df.loc[df.name == soi, nm] = df.loc[df.name == soi, nm].sum() + csv_soi[soi]
-        except:
-            df.loc[df.name == soi, nm] = csv_soi[soi]
+        if soi != "Basic cell groups and regions" and soi != "Cerebral cortex":
+            try: #if an entry already exists
+                df.loc[df.name == soi, nm] = df.loc[df.name == soi, nm].sum() + csv_soi[soi]
+            except:
+                df.loc[df.name == soi, nm] = csv_soi[soi]
 #%%            
 #filter out nan
 import seaborn as sns
-dfp = df.dropna(subset = ["cadw2_rhrh_cachexia", "cadw2_lh_cachexia", "pr2w2_lhrh_cachexia_series"])
+animals = ['cadw2_rhrh_cachexia', 'pr2w2_lhrh_cachexia_series', 'cadw2_lh_cachexia', 
+           'pr2w2_rh_ctrl_serie', 'pr2w2_rhrh_ctrl_', ]
+dfp = df.dropna(how = "all", subset = animals)
 dfp.index = dfp.name
 dfp = dfp.drop(columns = "name")
+dfp = dfp[animals]
 
 plt.figure(figsize=(1,18))
 cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
 cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
 cmap.set_under('w')
-p = sns.heatmap(dfp, yticklabels = dfp.index, cmap = cmap, vmin=0, vmax=0.5,
-            cbar_kws={'label': '% count'})
-p.set_yticklabels(dfp.index, size = 8)
+p = sns.heatmap(dfp, xticklabels = animals, yticklabels = dfp.index, cmap = cmap, vmin=0, vmax=750,
+            cbar_kws={'label': 'cadaverine + cells'})
+p.set_yticklabels(dfp.index, size = 7)
+plt.savefig("/home/kepecs/Desktop/test.pdf", bbox_inches = "tight")
