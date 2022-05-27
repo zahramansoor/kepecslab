@@ -7,7 +7,8 @@ Created on Tue May 17 10:57:45 2022
 """
 
 import tifffile as tif, matplotlib.pyplot as plt, numpy as np, os, pandas as pd, json, copy
-
+from scipy.stats import ttest_ind as ttest
+from statsmodels.stats.multitest import multipletests
 #%%
 src = "/home/kepecs/Documents/cadaverine_slices/original"
 ims = [os.path.join(src, xx) for xx in os.listdir(src) if "done" not in xx and "ch01" in xx and "cadw2_lh" in xx]
@@ -27,11 +28,7 @@ for im in ims:
 fl = "/home/kepecs/Documents/cadaverine_slices/modified_ch01/csv_data"
 ontology_file = "/home/kepecs/Documents/allen.json"
 csvs = [os.path.join(fl, xx) for xx in os.listdir(fl) if "csv" in xx]
-
-df = pd.DataFrame()
-allen = pd.read_excel("/home/kepecs/Documents/allen_id_table_w_voxel_counts.xlsx")
-df["name"] = allen.name
-df["voxels_in_structure"] = allen["voxels_in_structure"]
+#preprocessing to make into dataframe like amy's
 
 def get_progeny(dic,parent_structure,progeny_list):
    
@@ -53,30 +50,34 @@ def get_progeny(dic,parent_structure,progeny_list):
 
 with open(ontology_file) as json_file:
     ontology_dict = json.load(json_file)
+    
+#get voxel counts from brainpipe
+df = pd.DataFrame()
+allen = pd.read_excel("/home/kepecs/Documents/allen_id_table_w_voxel_counts.xlsx")
+df["name"] = allen.name
+df["voxels_in_structure"] = allen["voxels_in_structure"]
 
-#make a list of sois you want to quantify
-areas = ["Infralimbic area", "Prelimbic area", "Anterior cingulate area", "Frontal pole, cerebral cortex", "Orbital area", 
-            "Gustatory areas", "Agranular insular area", "Visceral area", "Somatosensory areas", "Somatomotor areas",
-            "Retrosplenial area", "Posterior parietal association areas", "Visual areas", "Temporal association areas",
-            "Auditory areas", "Ectorhinal area", "Perirhinal area", "Entorhinal area", "Ventral posteromedial nucleus of the thalamus", "Ventral posterolateral nucleus of the thalamus",
-            "Ventral anterior-lateral complex of the thalamus", "Anteroventral nucleus of thalamus", 
-            "Lateral dorsal nucleus of thalamus", "Paraventricular nucleus of the thalamus", "Medial habenula",
-            "Lateral posterior nucleus of the thalamus", "Posterior triangular thalamic nucleus", "Mediodorsal nucleus of thalamus",
-            "Posterior complex of the thalamus","Ventral medial nucleus of the thalamus","Reticular nucleus of the thalamus",
-            "Lateral hypothalamic area","Periventricular region","Zona incerta","Mammillary body","Anterior hypothalamic nucleus",
-            "Periventricular zone","Lateral preoptic area","Posterior hypothalamic nucleus", "Medial preoptic area","Tuberal nucleus",
-            "Ventromedial hypothalamic nucleus","Medial preoptic nucleus","Medial mammillary nucleus",
-            "Dorsomedial nucleus of the hypothalamus","Arcuate hypothalamic nucleus","Supramammillary nucleus","Paraventricular hypothalamic nucleus",
-            "Fields of Forel","Anteroventral periventricular nucleus","Periventricular hypothalamic nucleus, intermediate part",
-            "Caudoputamen", "Nucleus accumbens","Olfactory tubercle", "Lateral septal nucleus", "Pallidum"
-            "Medial amygdalar nucleus", "Central amygdalar nucleus","Anterior amygdalar area", "Septofimbrial nucleus",
-            "Fundus of striatum", "Intercalated amygdalar nucleus","Septohippocampal nucleus", "Claustrum", "Endopiriform nucleus", "Lateral amygdalar nucleus",
-            "Basolateral amygdalar nucleus", "Basomedial amygdalar nucleus", "Posterior amygdalar nucleus"]
+from allensdk.api.queries.ontologies_api import OntologiesApi
+oapi = OntologiesApi()
+structure_graph = oapi.get_structures_with_sets([1])  # 1 is the id of the adult mouse structure graph
+from allensdk.core.structure_tree import StructureTree
 
+# This removes some unused fields returned by the query
+structure_graph = StructureTree.clean_structures(structure_graph)  
+tree = StructureTree(structure_graph)
+# get the ids of all the structure sets in the tree
+structure_set_ids = tree.get_structure_sets()
+
+# query the API for information on those structure sets
+allen_stuff = pd.DataFrame(oapi.get_structure_sets(structure_set_ids))
+target_group = 167587189 #summary structures
+summary_structures = tree.get_structures_by_set_id([target_group])
+#%%
+sum_structs = pd.DataFrame(summary_structures)["name"]
 #count voxels in regions
 vox = pd.DataFrame()
-vox["name"] = areas
-for area in areas: 
+vox["name"] = sum_structs
+for area in sum_structs: 
     progeny = []; get_progeny(ontology_dict, area, progeny)
     try: 
         voxs = [allen.loc[allen.name == area, "voxels_in_structure"].values]
@@ -95,47 +96,53 @@ for csv in csvs:
     csv_ = pd.read_csv(csv)
     csv_soi = csv_["name"].value_counts() # cell counts
     # csv_soi = csv_["name"].value_counts()/len(csv_) #% cell counts
-    for soi in areas:
-        if soi != "Basic cell groups and regions" and soi != "Cerebral cortex":
-            progeny = []; get_progeny(ontology_dict, soi, progeny)
-            #try except statements are to make sure all sois and children are included
-            try:
-                counts = [csv_soi[soi]]             
+    for soi in sum_structs:
+        progeny = []; get_progeny(ontology_dict, soi, progeny)
+        #try except statements are to make sure all sois and children are included
+        try:
+            counts = [csv_soi[soi]]             
+        except:
+            counts = []
+        for prog in progeny:
+            try: 
+                counts.append(csv_soi[prog])
             except:
-                counts = []
-            for prog in progeny:
-                try: 
-                    counts.append(csv_soi[prog])
-                except:
-                    counts.append(0)
-            try: #if an entry already exists
-                df.loc[df.name == soi, nm] = df.loc[df.name == soi, nm].sum() + np.sum(counts)
-            except:
-                df.loc[df.name == soi, nm] = np.sum(counts)
+                counts.append(0)
+        try: #if an entry already exists
+            df.loc[df.name == soi, nm] = df.loc[df.name == soi, nm].sum() + np.sum(counts)
+        except:
+            df.loc[df.name == soi, nm] = np.sum(counts)
+#Calculate % counts
+animals = ['cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 'cadw1_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
+       'cadw2_nh_ctrl']
+
+for nm in animals:
+    total = np.nansum(df[nm])
+    df[nm+"_percent_count"] = [xx/total if xx != np.nan else np.nan for xx in df[nm]]
 #%%            
 #filter out nan
 import seaborn as sns
 from matplotlib.colors import LogNorm
 
-animals = ['cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 'cadw1_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
-       'cadw2_nh_ctrl']
 dfp = df.dropna(how = "all", subset = animals)
 dfp.index = dfp.name
 dfp = dfp.drop(columns = "name")
-dfp = dfp[animals]
 #add voxel column
-for area in areas:
-    dfp.loc[dfp.index == area, "voxels_in_structure"] = vox.loc[vox.name == area, "voxels_in_structure"].values
+for area in dfp.index:
+    if vox.loc[vox.name == area, "voxels_in_structure"].values>0:
+        dfp.loc[dfp.index == area, "voxels_in_structure"] = vox.loc[vox.name == area, "voxels_in_structure"].values
 
 dfd = dfp.copy()
 #get density
 for animal in animals:
     dfd[animal] = dfp[animal]/dfp["voxels_in_structure"]
-dfd = dfd.drop(columns = "voxels_in_structure")    
-plt.figure(figsize=(18,1.5))
+dfd = dfd.drop(columns = "voxels_in_structure").dropna(how = "all", subset = animals)[animals]   
+#%% 
+plt.figure(figsize=(30,1.5))
 cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
 cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
 cmap.set_under('w')
+
 p = sns.heatmap(dfd.T, yticklabels = animals, xticklabels = dfd.index, cmap = cmap, 
                 # norm = LogNorm(),
                 vmin=0, vmax=1e-2, 
@@ -143,6 +150,19 @@ p = sns.heatmap(dfd.T, yticklabels = animals, xticklabels = dfd.index, cmap = cm
 #how to quantify density?
 p.set_xticklabels(dfd.index, size = 8)
 plt.savefig("/home/kepecs/Desktop/density.jpg", bbox_inches = "tight")
+#%%
+#shuffle regions
+an = ['cadw2_rhrh_ca_percent_count', 'pr2w2_lhrh_ca_percent_count', 'cadw1_lh_cach_percent_count']
+arr = np.array(dfp[pcountanmials])
+shufs = [arr[np.random.choice(np.arange(len(arr)), replace=False, size=len(arr)),:] for i in range(10000)]
+shufmean = np.mean(shufs, axis=0)
+#one sided ttest
+# dfd["pvalue"]= [ttest(arr[i], shufmean[i])[1] if ttest(arr[i], shufmean[i])[0]>0 else 1 for i in range(len(arr))]
+#two sided  ttest
+dfp["pvalue"]= [ttest(arr[i], shufmean[i])[1] for i in range(len(arr))]
+dfp["qvalue"] = multipletests(dfp.pvalue.values, method="fdr_bh")[1]
+dfp = dfp[dfp[an[0]]!=0 and dfp[an[1]]!=0 and dfp[an[2]]!=0]
+dfp.to_csv("/home/kepecs/Desktop/text.csv")
 #%%
 #split plots by regions
 nc = ["Caudoputamen", "Nucleus accumbens","Olfactory tubercle", "Lateral septal nucleus", "Pallidum"]
