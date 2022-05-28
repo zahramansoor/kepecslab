@@ -153,7 +153,7 @@ plt.savefig("/home/kepecs/Desktop/density.jpg", bbox_inches = "tight")
 #%%
 #shuffle regions
 an = ['cadw2_rhrh_ca_percent_count', 'pr2w2_lhrh_ca_percent_count', 'cadw1_lh_cach_percent_count']
-arr = np.array(dfp[pcountanmials])
+arr = np.array(dfp[an])
 shufs = [arr[np.random.choice(np.arange(len(arr)), replace=False, size=len(arr)),:] for i in range(10000)]
 shufmean = np.mean(shufs, axis=0)
 #one sided ttest
@@ -161,8 +161,24 @@ shufmean = np.mean(shufs, axis=0)
 #two sided  ttest
 dfp["pvalue"]= [ttest(arr[i], shufmean[i])[1] for i in range(len(arr))]
 dfp["qvalue"] = multipletests(dfp.pvalue.values, method="fdr_bh")[1]
-dfp = dfp[dfp[an[0]]!=0 and dfp[an[1]]!=0 and dfp[an[2]]!=0]
-dfp.to_csv("/home/kepecs/Desktop/text.csv")
+#only get regions which dont have all zeros
+dfpp = dfp[(dfp[an[0]]!=0) | (dfp[an[1]]!=0) | (dfp[an[2]]!=0)]
+dfpp.to_csv("/home/kepecs/Desktop/text.csv")
+
+plt.figure(figsize=(30,1.5))
+cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
+cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
+cmap.set_under('w')
+
+## WORK IN PROGRESS
+p = sns.heatmap(dfpp.drop(columns = "voxels_in_structure").T, xticklabels = dfpp.drop(columns = "voxels_in_structure").index, cmap = cmap, 
+                # norm = LogNorm(),
+                # vmin=0, vmax=1e-2, 
+                cbar_kws={'label': 'cadaverine + cells / total cadaverine + cells in brain'})
+#how to quantify density?
+p.set_xticklabels(dfpp.drop(columns = "voxels_in_structure").index, size = 8)
+plt.savefig("/home/kepecs/Desktop/p_count.jpg", bbox_inches = "tight")
+
 #%%
 #split plots by regions
 nc = ["Caudoputamen", "Nucleus accumbens","Olfactory tubercle", "Lateral septal nucleus", "Pallidum"]
