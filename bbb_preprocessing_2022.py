@@ -113,12 +113,12 @@ for csv in csvs:
         except:
             df.loc[df.name == soi, nm] = np.sum(counts)
 #Calculate % counts
-animals = ['cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 'cadw1_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
-       'cadw2_nh_ctrl']
+animals = ['cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 'cadw1_lh_cach', 'cadw2_lh_cach',
+           'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct', 'cadw2_nh_ctrl']
 
 for nm in animals:
     total = np.nansum(df[nm])
-    df[nm+"_percent_count"] = [xx/total if xx != np.nan else np.nan for xx in df[nm]]
+    df[nm+"_percent_count"] = [xx/total if xx != np.nan else np.nan for xx in df[nm]] #avoid nans
 #%%            
 #filter out nan
 import seaborn as sns
@@ -152,8 +152,19 @@ p.set_xticklabels(dfd.index, size = 8)
 plt.savefig("/home/kepecs/Desktop/density.jpg", bbox_inches = "tight")
 #%%
 #shuffle regions
-an = ['cadw2_rhrh_ca_percent_count', 'pr2w2_lhrh_ca_percent_count', 'cadw1_lh_cach_percent_count']
-arr = np.array(dfp[an])
+#reorgnize df
+dfp = df.dropna(how = "all", subset = animals)
+dfp.index = dfp.name
+dfp = dfp.drop(columns = "name")
+#add voxel column
+for area in dfp.index:
+    if vox.loc[vox.name == area, "voxels_in_structure"].values>0:
+        dfp.loc[dfp.index == area, "voxels_in_structure"] = vox.loc[vox.name == area, "voxels_in_structure"].values
+
+
+ans = ['cadw2_rhrh_ca_percent_count', 'pr2w2_lhrh_ca_percent_count', 'cadw1_lh_cach_percent_count',
+       'cadw2_lh_cach_percent_count']
+arr = np.array(dfp[ans])
 shufs = [arr[np.random.choice(np.arange(len(arr)), replace=False, size=len(arr)),:] for i in range(10000)]
 shufmean = np.mean(shufs, axis=0)
 #one sided ttest
@@ -162,22 +173,34 @@ shufmean = np.mean(shufs, axis=0)
 dfp["pvalue"]= [ttest(arr[i], shufmean[i])[1] for i in range(len(arr))]
 dfp["qvalue"] = multipletests(dfp.pvalue.values, method="fdr_bh")[1]
 #only get regions which dont have all zeros
-dfpp = dfp[(dfp[an[0]]!=0) | (dfp[an[1]]!=0) | (dfp[an[2]]!=0)]
+dfpp = dfp[(dfp[ans[0]]!=0) | (dfp[ans[1]]!=0) | (dfp[ans[2]]!=0)]
 dfpp.to_csv("/home/kepecs/Desktop/text.csv")
+#filter by significance
+dfsig = dfpp[dfpp.qvalue < 0.1]
 
-plt.figure(figsize=(30,1.5))
+#formatting df
+dfplot = dfsig.drop(columns = ["voxels_in_structure", 'cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 
+                               'cadw1_lh_cach', 'cadw2_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
+       'cadw2_nh_ctrl', 'pvalue', 'qvalue', 'cadw2_nh_ctrl_percent_count', 'pr2w2_rhrh_ct_percent_count', 
+       'pr2w2_rh_ctrl_percent_count'])
+for an in ans:
+    dfplot[an] = dfsig[an]/dfsig["voxels_in_structure"]
+
+
+plt.figure(figsize=(15,0.8))
 cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
 cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
 cmap.set_under('w')
-
 ## WORK IN PROGRESS
-p = sns.heatmap(dfpp.drop(columns = "voxels_in_structure").T, xticklabels = dfpp.drop(columns = "voxels_in_structure").index, cmap = cmap, 
+p = sns.heatmap(dfplot.T, xticklabels = dfplot.index, 
+                yticklabels = ['cadw2_rhrh', 'pr2w2_lhrh', 'cadw1_lh', 'cadw2_lh'],
+                cmap = cmap, 
                 # norm = LogNorm(),
-                # vmin=0, vmax=1e-2, 
-                cbar_kws={'label': 'cadaverine + cells / total cadaverine + cells in brain'})
+                vmin=0, vmax=2e-7, 
+                cbar_kws={'label': '% + cells/total voxels'})
 #how to quantify density?
-p.set_xticklabels(dfpp.drop(columns = "voxels_in_structure").index, size = 8)
-plt.savefig("/home/kepecs/Desktop/p_count.jpg", bbox_inches = "tight")
+p.set_xticklabels(dfplot.index, size = 7)
+plt.savefig("/home/kepecs/Desktop/norm.pdf", bbox_inches = "tight")
 
 #%%
 #split plots by regions
