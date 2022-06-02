@@ -1,29 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 17 10:57:45 2022
+Created on Wed Jun  1 09:20:30 2022
 
 @author: kepecs
 """
 
+
 import tifffile as tif, matplotlib.pyplot as plt, numpy as np, os, pandas as pd, json, copy
 from scipy.stats import ttest_ind as ttest
 from statsmodels.stats.multitest import multipletests
-#%%
-src = "/home/kepecs/Documents/cadaverine_slices/original"
-ims = [os.path.join(src, xx) for xx in os.listdir(src) if "done" not in xx and "ch01" in xx]
-for im in ims:
-    print(im)
-    dst = "/home/kepecs/Documents/cadaverine_slices/modified_ch01"
-    img = tif.imread(im)
-    img = np.rot90(img, axes=(1,0))
-    pad = 5000
-    imgb = np.zeros((img.shape[0]+pad, img.shape[1]+pad))
-    imgb[int(pad/2):imgb.shape[0]-int(pad/2), int(pad/2):imgb.shape[1]-int(pad/2)]=img
-    tif.imsave(os.path.join(dst, os.path.basename(im)), imgb.astype('uint16'))
-    del(img); del(imgb)
 
-#%%
 #postprocessing
 fl = "/home/kepecs/Documents/cadaverine_slices/modified_ch01/csv_data"
 ontology_file = "/home/kepecs/Documents/allen.json"
@@ -137,19 +124,6 @@ dfd = dfp.copy()
 for animal in animals:
     dfd[animal] = dfp[animal]/dfp["voxels_in_structure"]
 dfd = dfd.drop(columns = "voxels_in_structure").dropna(how = "all", subset = animals)[animals]   
-#%% 
-plt.figure(figsize=(30,1.5))
-cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
-cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
-cmap.set_under('w')
-
-p = sns.heatmap(dfd.T, yticklabels = animals, xticklabels = dfd.index, cmap = cmap, 
-                # norm = LogNorm(),
-                vmin=0, vmax=1e-2, 
-                cbar_kws={'label': 'cadaverine + cells / total voxels in structure'})
-#how to quantify density?
-p.set_xticklabels(dfd.index, size = 8)
-plt.savefig("/home/kepecs/Desktop/density.jpg", bbox_inches = "tight")
 #%%
 #shuffle regions
 #reorgnize df
@@ -177,16 +151,28 @@ dfpp = dfp[(dfp[ans[0]]!=0) | (dfp[ans[1]]!=0) | (dfp[ans[2]]!=0)]
 dfpp.to_csv("/home/kepecs/Desktop/text.csv")
 #filter by significance
 dfsig = dfpp[dfpp.qvalue < 0.1]
+#import ventricle stats
+dfv = pd.read_csv("/home/kepecs/Documents/cadaverine_slices/distance_from_ventricle.csv", index_col = None)
+#import vasculature stats
+dfvasc = pd.read_csv("/home/kepecs/Documents/cadaverine_slices/vasculature.csv", index_col=None)
+#add ventricle distance (min)
+#normalize vasculature point size by area
+for xx in dfsig.index:
+    dfsig.loc[dfsig.index == xx, "median_euclidean_dist_from_ventricle"] = dfv.loc[dfv.name == xx, "median_euclidean_dist_from_ventricle"].values
+    dfsig.loc[dfsig.index == xx, "vasculature_points_norm"] = int(dfvasc.loc[dfvasc["name"] == xx,
+    "vasculature_points"])/int(dfsig.loc[dfsig.index == xx, "voxels_in_structure"])
 
+#sort either by euclidean dist or vasculature
+dfsig = dfsig.sort_values(by = "vasculature_points_norm") #sort
 #formatting df
 dfplot = dfsig.drop(columns = ["voxels_in_structure", 'cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 
                                'cadw1_lh_cach', 'cadw2_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
        'cadw2_nh_ctrl', 'pvalue', 'qvalue', 'cadw2_nh_ctrl_percent_count', 'pr2w2_rhrh_ct_percent_count', 
-       'pr2w2_rh_ctrl_percent_count'])
+       'pr2w2_rh_ctrl_percent_count', 'median_euclidean_dist_from_ventricle','vasculature_points_norm'])
 for an in ans:
     dfplot[an] = dfsig[an]/dfsig["voxels_in_structure"]
 
-
+#%%    
 plt.figure(figsize=(15,0.8))
 cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
 cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
@@ -200,20 +186,21 @@ p = sns.heatmap(dfplot.T, xticklabels = dfplot.index,
                 cbar_kws={'label': '% + cells/total voxels'})
 #how to quantify density?
 p.set_xticklabels(dfplot.index, size = 7)
-plt.savefig("/home/kepecs/Desktop/norm.pdf", bbox_inches = "tight")
+p.set_xlabel("Regions, min to max vasculature")
+plt.savefig("/home/kepecs/Desktop/vasc_norm.pdf", bbox_inches = "tight")
 
 #%%
 #split plots by regions
-nc = ["Caudoputamen", "Nucleus accumbens","Olfactory tubercle", "Lateral septal nucleus", "Pallidum"]
-plt.figure(figsize=(2,5))
-cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
-cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
-cmap.set_under('w')
-p = sns.heatmap(dfp[dfd.index.isin(nc)].drop(columns = "voxels_in_structure"), xticklabels = animals, cmap = cmap, 
-                # norm = LogNorm(),
-                vmin=0, vmax=200, 
-                cbar_kws={'label': 'cadaverine + cells'})
-#how to quantify density?
-p.set_yticklabels(p.get_yticklabels(), size = 8)
+# nc = ["Caudoputamen", "Nucleus accumbens","Olfactory tubercle", "Lateral septal nucleus", "Pallidum"]
+# plt.figure(figsize=(2,5))
+# cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
+# cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
+# cmap.set_under('w')
+# p = sns.heatmap(dfp[dfd.index.isin(nc)].drop(columns = "voxels_in_structure"), xticklabels = animals, cmap = cmap, 
+#                 # norm = LogNorm(),
+#                 vmin=0, vmax=200, 
+#                 cbar_kws={'label': 'cadaverine + cells'})
+# #how to quantify density?
+# p.set_yticklabels(p.get_yticklabels(), size = 8)
 
-plt.savefig("/home/kepecs/Desktop/str_counts.jpg", bbox_inches = "tight")
+# plt.savefig("/home/kepecs/Desktop/str_counts.jpg", bbox_inches = "tight")
