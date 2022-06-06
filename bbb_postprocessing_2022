@@ -158,17 +158,18 @@ dfvasc = pd.read_csv("/home/kepecs/Documents/cadaverine_slices/vasculature.csv",
 #add ventricle distance (min)
 #normalize vasculature point size by area
 for xx in dfsig.index:
-    dfsig.loc[dfsig.index == xx, "median_euclidean_dist_from_ventricle"] = dfv.loc[dfv.name == xx, "median_euclidean_dist_from_ventricle"].values
+    dfsig.loc[dfsig.index == xx, "median_euclidean_dist_from_ventricle_borders"] = dfv.loc[dfv.name == xx, "median_euclidean_dist_from_ventricle_borders"].values
+    #vasculature normalized by area
     dfsig.loc[dfsig.index == xx, "vasculature_points_norm"] = int(dfvasc.loc[dfvasc["name"] == xx,
     "vasculature_points"])/int(dfsig.loc[dfsig.index == xx, "voxels_in_structure"])
 
 #sort either by euclidean dist or vasculature
-dfsig = dfsig.sort_values(by = "vasculature_points_norm") #sort
+dfsig = dfsig.sort_values(by = "median_euclidean_dist_from_ventricle_borders") #sort
 #formatting df
 dfplot = dfsig.drop(columns = ["voxels_in_structure", 'cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 
                                'cadw1_lh_cach', 'cadw2_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
        'cadw2_nh_ctrl', 'pvalue', 'qvalue', 'cadw2_nh_ctrl_percent_count', 'pr2w2_rhrh_ct_percent_count', 
-       'pr2w2_rh_ctrl_percent_count', 'median_euclidean_dist_from_ventricle','vasculature_points_norm'])
+       'pr2w2_rh_ctrl_percent_count', 'median_euclidean_dist_from_ventricle_borders','vasculature_points_norm'])
 for an in ans:
     dfplot[an] = dfsig[an]/dfsig["voxels_in_structure"]
 
@@ -186,8 +187,8 @@ p = sns.heatmap(dfplot.T, xticklabels = dfplot.index,
                 cbar_kws={'label': '% + cells/total voxels'})
 #how to quantify density?
 p.set_xticklabels(dfplot.index, size = 7)
-p.set_xlabel("Regions, min to max vasculature")
-plt.savefig("/home/kepecs/Desktop/vasc_norm.pdf", bbox_inches = "tight")
+p.set_xlabel("Regions, min to max distance from a brain border or ventricle")
+plt.savefig("/home/kepecs/Desktop/vent_norm.pdf", bbox_inches = "tight")
 
 #%%
 #split plots by regions

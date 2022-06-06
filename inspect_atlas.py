@@ -26,6 +26,7 @@ import pandas as pd
 from allensdk.core.structure_tree import StructureTree
 
 # This removes some unused fields returned by the query
+structure_graph = oapi.get_structures_with_sets([1])  # 1 is the id of the adult mouse structure graph
 structure_graph = StructureTree.clean_structures(structure_graph)  
 tree = StructureTree(structure_graph)
 # get the ids of all the structure sets in the tree
@@ -64,6 +65,24 @@ ventricular_mask = rsp.make_structure_mask([73])
 fig, ax = plt.subplots(figsize=(10, 10))
 #look at ventricular mask
 plt.imshow(np.max(ventricular_mask, axis=0), interpolation='none', cmap=plt.cm.afmhot)
+
+#make mask of edge of the brain
+brain_mask = rsp.make_structure_mask([8])
+#dilate around mask
+from skimage.morphology import binary_dilation
+from skimage import morphology
+from scipy.ndimage.morphology import distance_transform_edt
+distance_space_outside = distance_transform_edt(np.logical_not(brain_mask.astype("bool")), 
+                                                sampling=(25,25,25)) #INSIDE
+
+mask = np.copy(distance_space_outside)
+struct_microns_to_dilate = 80
+mask[distance_space_outside >= struct_microns_to_dilate] = 0
+outline = brain_mask-mask
+#zero out other values <=1 not related to cdists
+outline[outline>=1] = 0
+#add to ventricular outlines
+outline_w_ventricles = (outline.astype(bool).astype(int) + ventricular_mask).astype(bool).astype(int)
 #%%
 #get lists of structures used in statistics
 structure_graph = oapi.get_structures_with_sets([1])  # 1 is the id of the adult mouse structure graph
@@ -104,10 +123,13 @@ os.listdir(annotation_dir)
 from scipy.ndimage.measurements import center_of_mass
 from scipy.spatial.distance import cdist
 import nrrd
+annotation_dir = '/home/kepecs/Documents/cadaverine_slices/annotation'
+
 #centroid df
+sum_structs = pd.DataFrame(summary_structures)["id"].values
 df = pd.DataFrame(); df["id"] = sum_structs; df["name"] = pd.DataFrame(summary_structures)["name"].values
 #find nonzero points of ventricular mask
-v = np.array([np.nonzero(ventricular_mask)[0],np.nonzero(ventricular_mask)[1],np.nonzero(ventricular_mask)[2]]).T
+v = np.array([np.nonzero(outline_w_ventricles)[0],np.nonzero(outline_w_ventricles)[1],np.nonzero(outline_w_ventricles)[2]]).T
 for mask in os.listdir(annotation_dir):
     readdata, header = nrrd.read(os.path.join(annotation_dir, mask))
     z, y, x = center_of_mass(readdata)
@@ -116,9 +138,9 @@ for mask in os.listdir(annotation_dir):
     df.loc[df.id == int(mask[10:-5]), "centroid_x"] = int(x)
     print(mask[10:-5])
     dists = np.array([np.linalg.norm(np.array([z,y,x])-v[i]) for i in range(len(v))])
-    df.loc[df.id == int(mask[10:-5]), "median_euclidean_dist_from_ventricle"] = np.median(dists)
-    df.loc[df.id == int(mask[10:-5]), "min_euclidean_dist_from_ventricle"] = np.min(dists)
-    df.loc[df.id == int(mask[10:-5]), "max_euclidean_dist_from_ventricle"] = np.max(dists)
+    df.loc[df.id == int(mask[10:-5]), "median_euclidean_dist_from_ventricle_borders"] = np.median(dists)
+    df.loc[df.id == int(mask[10:-5]), "min_euclidean_dist_from_ventricle_borders"] = np.min(dists)
+    df.loc[df.id == int(mask[10:-5]), "max_euclidean_dist_from_ventricle_borders"] = np.max(dists)
 #export    
 df.to_csv("/home/kepecs/Documents/cadaverine_slices/distance_from_ventricle.csv", index = None)
 
