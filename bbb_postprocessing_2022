@@ -6,7 +6,6 @@ Created on Wed Jun  1 09:20:30 2022
 @author: kepecs
 """
 
-
 import tifffile as tif, matplotlib.pyplot as plt, numpy as np, os, pandas as pd, json, copy
 from scipy.stats import ttest_ind as ttest
 from statsmodels.stats.multitest import multipletests
@@ -39,11 +38,7 @@ with open(ontology_file) as json_file:
     ontology_dict = json.load(json_file)
     
 #get voxel counts from brainpipe
-df = pd.DataFrame()
 allen = pd.read_excel("/home/kepecs/Documents/allen_id_table_w_voxel_counts.xlsx")
-df["name"] = allen.name
-df["voxels_in_structure"] = allen["voxels_in_structure"]
-
 from allensdk.api.queries.ontologies_api import OntologiesApi
 oapi = OntologiesApi()
 structure_graph = oapi.get_structures_with_sets([1])  # 1 is the id of the adult mouse structure graph
@@ -59,9 +54,15 @@ structure_set_ids = tree.get_structure_sets()
 allen_stuff = pd.DataFrame(oapi.get_structure_sets(structure_set_ids))
 target_group = 167587189 #summary structures
 summary_structures = tree.get_structures_by_set_id([target_group])
-#%%
+
+#%%%
 #get names of summary structures
 sum_structs = [xx for xx in pd.DataFrame(summary_structures)["name"].values if xx != "fiber tracts"]
+ca_animals = ['cadw2_rhrh_ca', 'cadw1_lh_cach', 'pr2w2_lhrh_ca', 'cadw2_lh_cach']
+
+df = pd.DataFrame()
+df["name"] = sum_structs
+df["id"]= [xx for xx in pd.DataFrame(summary_structures)["id"].values if xx != 1009]
 #count voxels in regions
 vox = pd.DataFrame()
 vox["name"] = sum_structs
@@ -79,8 +80,6 @@ for area in sum_structs:
     vox.loc[vox.name == area, "voxels_in_structure"] = np.sum(voxs)
 
 #compile # of times structure shows up in a csv        
-#compile csvs
-nmdf = pd.DataFrame(); nmdf["name"] = sum_structs
 #also make a dict to store AP coords for striatum!
 for csv in csvs:
     nm = os.path.basename(csv)[:13]
@@ -89,7 +88,7 @@ for csv in csvs:
     #add AP axis to df and export
     apdf = pd.DataFrame(csv_soi)
     if len(csv_soi) > 0:
-        apdf["AP"] = [np.unique(csv_.AP)[0]]*len(csv_soi); apdf.columns = ["id", "AP"]
+        apdf["AP"] = [np.unique(csv_.AP)[0]]*len(csv_soi); apdf.columns = ["count", "AP"]
         apdf.to_csv(csv[:-4]+"_w_counts_AP.csv")
     for soi in sum_structs:
         progeny = []; get_progeny(ontology_dict, soi, progeny)
@@ -97,11 +96,9 @@ for csv in csvs:
         try:
             #if struct has counts by itself
             counts = [csv_soi[soi]]
-            nmdf.loc[nmdf.name == soi, nm]=1
         except:
             counts = []
             #init the animal column in the struct count df
-            nmdf.loc[nmdf.name == soi, nm]=0
         for prog in progeny:
             try: 
                 counts.append(csv_soi[prog])
@@ -109,57 +106,59 @@ for csv in csvs:
                 counts.append(0)
         try: #if an entry already exists
             df.loc[df.name == soi, nm] = df.loc[df.name == soi, nm].sum() + np.sum(counts)
-            nmdf.loc[nmdf.name == soi, nm] = nmdf.loc[nmdf.name == soi, nm]+len(progeny)
-            nmdf.loc[nmdf.name == soi, nm+"_AP"] = nmdf.loc[nmdf.name == soi, nm+"_AP"].append(np.unique(csv_.AP)[0])
         except:
             df.loc[df.name == soi, nm] = np.sum(counts)
-            nmdf.loc[nmdf.name == soi, nm] = len(progeny)
-            
-nmdf.to_csv('/home/kepecs/Documents/cadaverine_slices/no_of_times_structures_quantified_per_animal.csv')
 
+###########IMPORTANT###########
+#only get regions which dont have all zeros in the dataframe where i quantified occurence of structure
+src = "/home/kepecs/Documents/cadaverine_slices/modified_ch01/csv_data"
+dfs = [os.path.join(src, xx) for xx in os.listdir(src) if "AP" in xx]
+for i, an in enumerate(ca_animals):
+    dfs_ca = [xx for xx in dfs if an in xx]
+    if i == 0:
+        df_ca = pd.concat([pd.read_csv(xx) for xx in dfs_ca])
+        df_ca["animal"] = [an]*len(df_ca)
+    else:
+        df_ca_ = pd.concat([pd.read_csv(xx) for xx in dfs_ca])
+        df_ca_["animal"] = [an]*len(df_ca_)
+        df_ca = df_ca.merge(df_ca_, how = "outer")
+#rename columns
+df_ca.columns = ['name', 'count', 'AP', 'animal']
+       
+#i want to check whether each structure, its parent, or its parent's parent is within a structure on sum_structs
+#....
+include = []
+for soi in sum_structs:
+    progeny = [soi]; get_progeny(ontology_dict, soi, progeny)
+    incl = [xx for xx in progeny if xx in df_ca.name.unique()]
+    if len(incl)>=1:
+        include.append((soi))
+#filter df by only structures who are /whose parents are quantified
+df = df[df.name.isin(include)]
 #Calculate % counts
 #order of animals
 animals = ['cadw2_rhrh_ca', 'cadw1_lh_cach', 'pr2w2_lhrh_ca', 'cadw2_lh_cach', 
      'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct', 'cadw2_nh_ctrl']
-for nm in df.columns[2:]: #only for animal columns
+for nm in animals: #only for animal columns
     total = np.nansum(df[nm])
     df[nm+"_percent_count"] = [xx/total if xx != np.nan else np.nan for xx in df[nm]] #avoid nans
-#%%            
-#filter out regions with all nans
-dfp = df.dropna(how = "all", subset = animals)
-dfp.index = dfp.name
-dfp = dfp.drop(columns = "name")
-#add voxel column
-for area in dfp.index:
-    if vox.loc[vox.name == area, "voxels_in_structure"].values>0:
-        dfp.loc[dfp.index == area, "voxels_in_structure"] = vox.loc[vox.name == area, "voxels_in_structure"].values
 
-dfd = dfp.copy()
-#get density
-for animal in animals:
-    dfd[animal] = dfp[animal]/dfp["voxels_in_structure"]
-dfd = dfd.drop(columns = "voxels_in_structure").dropna(how = "all", subset = animals)[animals]   
-#%%
+#%%            
 #shuffle regions
 #reorgnize df
 dfp = df.dropna(how = "all", subset = animals) #remove areas with NaNs
-#only get structures that are present in all cachexia animals
-ca_animals = ['cadw2_rhrh_ca', 'cadw1_lh_cach', 'pr2w2_lhrh_ca', 'cadw2_lh_cach']
 dfp.index = dfp.name
 dfp = dfp.drop(columns = "name")
 #add voxel column
 for area in dfp.index:
     if vox.loc[vox.name == area, "voxels_in_structure"].values>0:
         dfp.loc[dfp.index == area, "voxels_in_structure"] = vox.loc[vox.name == area, "voxels_in_structure"].values
-#only get regions which dont have all zeros in the dataframe where i quantified occurence of structure
-structs_quantified = nmdf[~nmdf[['cadw2_rhrh_ca', 'cadw1_lh_cach', 'pr2w2_lhrh_ca', 'cadw2_lh_cach']].eq(0).sum(1).ge(3)].name.values
-dfp = dfp[dfp.index.isin(structs_quantified)]
 
-ans = ['cadw2_rhrh_ca_percent_count', 'pr2w2_lhrh_ca_percent_count', 'cadw1_lh_cach_percent_count',
-       'cadw2_lh_cach_percent_count']
+ans = ['cadw2_rhrh_ca_percent_count', 'cadw1_lh_cach_percent_count',
+       'pr2w2_lhrh_ca_percent_count', 'cadw2_lh_cach_percent_count']
 #only include animal % counts
 arr = np.array(dfp[ans])
-shufs = [arr[np.random.choice(np.arange(len(arr)), replace=False, size=len(arr)),:] for i in range(10000)]
+shufs = [arr[np.random.choice(np.arange(len(arr)), replace=False, size=len(arr)),:] for i in range(100000)]
 shufmean = np.mean(shufs, axis=0)
 #one sided ttest
 # dfd["pvalue"]= [ttest(arr[i], shufmean[i])[1] if ttest(arr[i], shufmean[i])[0]>0 else 1 for i in range(len(arr))]
@@ -172,10 +171,6 @@ dfp.to_csv("/home/kepecs/Documents/cadaverine_slices/all_counts.csv")
 #%%
 #filter by significance
 dfsig = dfp[(dfp.qvalue < 0.1)]# dfsig = dfpp[dfpp.qvalue < 0.1]
-#keep only structures with no more than 3 zeros across cachexia animals
-#aka atleast 1 cachexia animal has a representation of the area
-# structs_to_keep = nmdf[~nmdf[['cadw2_rhrh_ca', 'cadw1_lh_cach', 'pr2w2_lhrh_ca', 'cadw2_lh_cach']].eq(0).sum(1).ge(3)] 
-# dfsig[dfsig.index.isin(structs_to_keep.name.values)]
 #import ventricle stats
 dfv = pd.read_csv("/home/kepecs/Documents/cadaverine_slices/distance_from_ventricle.csv", index_col = None)
 #import vasculature stats
@@ -193,18 +188,18 @@ for xx in dfsig.index:
 #sort either by euclidean dist or vasculature
 dfsig = dfsig.sort_values(by = "median_euclidean_dist_from_ventricle_borders") #sort
 #formatting df
-dfplot = dfsig.drop(columns = ["voxels_in_structure", 'cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 
+dfplot = dfsig.drop(columns = ["id","voxels_in_structure", 'cadw2_rhrh_ca', 'pr2w2_lhrh_ca', 
                                'cadw1_lh_cach', 'cadw2_lh_cach', 'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct',
        'cadw2_nh_ctrl', 'pvalue', 'qvalue', 'cadw2_nh_ctrl_percent_count', 'pr2w2_rhrh_ct_percent_count', 
        'pr2w2_rh_ctrl_percent_count', 'median_euclidean_dist_from_ventricle_borders','vasculature_points_norm'])
-#% counts/voxels in structure!
+#% counts/voxels in structure! for plotting
 for an in ans:
     dfplot[an] = dfsig[an]/dfsig["voxels_in_structure"]
 
 #%%    
 import seaborn as sns
 
-plt.figure(figsize=(18,0.8))
+plt.figure(figsize=(20,0.8))
 cmap = copy.copy(plt.cm.Blues)#plt.cm.Reds)
 cmap.set_over(plt.cm.Blues(1.0)) #cmap.set_over('maroon')
 cmap.set_under('w')
@@ -221,23 +216,9 @@ p.set_xlabel("Regions, min to max distance from a brain border or ventricle")
 plt.savefig("/home/kepecs/Desktop/vent_norm.pdf", bbox_inches = "tight")
 
 #%%
-# split plots by regions and AP coordinates of striatum
-src = "/home/kepecs/Documents/cadaverine_slices/modified_ch01/csv_data"
-dfs = [os.path.join(src, xx) for xx in os.listdir(src) if "AP" in xx]
-for i, an in enumerate(ca_animals):
-    dfs_ca = [xx for xx in dfs if an in xx]
-    if i == 0:
-        df_ca = pd.concat([pd.read_csv(xx) for xx in dfs_ca])
-        df_ca["animal"] = [an]*len(df_ca)
-    else:
-        df_ca_ = pd.concat([pd.read_csv(xx) for xx in dfs_ca])
-        df_ca_["animal"] = [an]*len(df_ca_)
-        df_ca = df_ca.merge(df_ca_, how = "outer")
-    
+# split plots by regions and AP coordinates of striatum    
 #define tail of striatum
 tail_ap = -1.2
-#arrange df_ca columns
-df_ca.columns = ['name', 'count', 'AP', 'animal']
 all_striatum = df_ca[(df_ca.name == "Caudoputamen")]
 all_striatum["tail"] = all_striatum.AP < tail_ap
 
@@ -246,3 +227,31 @@ sns.factorplot(x = 'animal', y='count',
 sns.stripplot(x="animal", y="count", hue="tail",
                    data=all_striatum, dodge=True, color = ".3")
 plt.savefig("/home/kepecs/Desktop/str_counts.pdf", bbox_inches = "tight")
+#%%
+
+regions = ["Basolateral amygdalar nucleus", "Basomedial amygdalar nucleus", "Lateral amygdalar nucleus",
+           "Claustrum", "Posterior amygdalar nucleus", "Caudoputamen", "Nucleus accumbens", "Bed nuclei of the stria terminalis",
+           "Paraventricular nucleus of the thalamus", "Arcuate hypothalamic nucleus", "Visual areas",
+           "Auditory areas", "Anterior cingulate area, dorsal part", "Anterior cingulate area, ventral part",
+           "Prelimbic area", "Infralimbic area", "Orbital area, lateral part", "Orbital area, medial part", "Orbital area, ventrolateral part",
+           "Primary motor area", "Gustatory areas", "Visceral area", "Supplemental somatosensory area"]
+allreg = dfp[(dfp.index.isin(regions))]
+all_animals = ['cadw2_rhrh_ca', 'cadw1_lh_cach', 'pr2w2_lhrh_ca', 'cadw2_lh_cach', 
+               'pr2w2_rh_ctrl', 'pr2w2_rhrh_ct', 'cadw2_nh_ctrl']
+colors = ["g", "g", "g", "g", "k", "k", "k"]
+markers = ["*", "v", "o", "s", "*", "v", "s"]
+for an in all_animals:
+    for xx in regions:
+        allreg.loc[allreg.index == xx, an+"_density"] = allreg.loc[allreg.index == xx, an]/(allreg.loc[allreg.index == xx, "voxels_in_structure"]* (1/25)**3)
+
+for i,an in enumerate(all_animals):
+    g = sns.scatterplot(x = 'name', y=an+"_density", 
+                   data=allreg, color = colors[i], marker = markers[i])
+#log scale
+g.set_yscale("log")
+# Put the legend out of the figure
+plt.legend(all_animals, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+plt.xticks(rotation = 90)
+plt.ylabel("density (cells/mm$^3$)")
+plt.savefig("/home/kepecs/Desktop/reg_counts_log.pdf", bbox_inches = "tight")
+plt.savefig("/home/kepecs/Desktop/reg_counts_log.jpg", bbox_inches = "tight")
